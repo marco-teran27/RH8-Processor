@@ -28,7 +28,7 @@ namespace RhinoInt
         {
             var services = new ServiceCollection();
             ServiceConfigurator.ConfigureServices(services);
-            services.AddTransient<IRhinoCommOut, RhinoCommOut>(); // Rhino-specific here
+            services.AddTransient<IRhinoCommOut, RhinoCommOut>(); // Reference the separate class
             return services.BuildServiceProvider();
         }
 
@@ -46,19 +46,6 @@ namespace RhinoInt
                 RhinoApp.WriteLine($"Error in BatchProcessor: {ex.Message}");
                 return Result.Failure;
             }
-        }
-    }
-
-    public class RhinoCommOut : IRhinoCommOut
-    {
-        public void ShowMessage(string message)
-        {
-            RhinoApp.WriteLine(message);
-        }
-
-        public void ShowError(string error)
-        {
-            RhinoApp.WriteLine($"Error: {error}");
         }
     }
 }
