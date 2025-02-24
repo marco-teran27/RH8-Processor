@@ -1,9 +1,9 @@
 using System.IO;
 using System.Text.Json;
 using System.Threading.Tasks;
-using ConfigJSON.Models;
+using Config.Models;
 
-namespace ConfigJSON
+namespace Config
 {
     public class ConfigParser
     {

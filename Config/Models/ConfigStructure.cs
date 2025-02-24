@@ -1,32 +1,53 @@
 using System.Text.Json.Serialization;
 using System.Collections.Generic;
 
-namespace ConfigJSON.Models
+namespace Config.Models
 {
+    /// <summary>
+    /// Represents the complete configuration structure for batch processing.
+    /// </summary>
     public class ConfigStructure
     {
+        /// <summary>
+        /// Project name specified in the JSON config.
+        /// </summary>
         [JsonPropertyName("projectName")]
         public string ProjectName { get; set; } = string.Empty;
 
+        /// <summary>
+        /// Directory settings for file, output, and script paths.
+        /// </summary>
         [JsonPropertyName("directories")]
-        public DirectorySettings Directories { get; set; } = new DirectorySettings();
+        public DirectorySettings Directories { get; set; } = new();
 
+        /// <summary>
+        /// Script settings including script name and type.
+        /// </summary>
         [JsonPropertyName("script_settings")]
-        public ScriptSettings ScriptSettings { get; set; } = new ScriptSettings();
+        public ScriptSettings Script_Settings { get; set; } = new();
 
+        /// <summary>
+        /// Rhino file name settings for filtering file names.
+        /// </summary>
         [JsonPropertyName("rhino_file_name_settings")]
-        public RhinoFileNameSettings RhinoFileNameSettings { get; set; } = new RhinoFileNameSettings();
+        public RhinoFileNameSettings Rhino_File_Name_Settings { get; set; } = new();
 
+        /// <summary>
+        /// PID settings for selecting specific files.
+        /// </summary>
         [JsonPropertyName("pid_settings")]
-        public PIDSettings PidSettings { get; set; } = new PIDSettings();
+        public PIDSettings Pid_Settings { get; set; } = new();
 
+        /// <summary>
+        /// Timeout settings for batch processing.
+        /// </summary>
         [JsonPropertyName("timeout_settings")]
-        public TimeOutSettings TimeoutMinutes { get; set; } = new TimeOutSettings();
+        public TimeOutSettings Timeout_Minutes { get; set; } = new();
 
+        /// <summary>
+        /// Reprocessing settings for retrying failed operations.
+        /// </summary>
         [JsonPropertyName("reprocess_settings")]
-        public ReprocessSettings ReprocessSettings { get; set; } = new ReprocessSettings();
-
-        [JsonIgnore]
-        public string FilePath { get; set; } = string.Empty;
+        public ReprocessSettings Reprocess_Settings { get; set; } = new();
     }
 }

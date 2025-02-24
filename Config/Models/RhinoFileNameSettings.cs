@@ -1,11 +1,29 @@
-// File: ConfigJSON\Models\RhinoFileNameSettings.cs
+using System;
+using System.Collections.Generic;
 using System.Text.Json.Serialization;
+using Config.Validation;
 
-namespace ConfigJSON.Models
+/// <summary>
+/// Represents settings for filtering or processing Rhino file names.
+/// 
+/// Summary:
+/// This model holds the configuration for Rhino file name filtering (mode and keywords).
+/// All validation should be performed via the RhinoFileNameValidator in the validation modules.
+/// </summary>
+namespace Config.Models
 {
     public class RhinoFileNameSettings
     {
-        [JsonPropertyName("file_name_pattern")]
-        public string FileNamePattern { get; set; } = string.Empty;
+        /// <summary>
+        /// The mode for processing file names ("list" or "all").
+        /// </summary>
+        [JsonPropertyName("mode")]
+        public string Mode { get; set; } = string.Empty;
+
+        /// <summary>
+        /// List of keywords used when mode is "list" to filter file names.
+        /// </summary>
+        [JsonPropertyName("keywords")]
+        public List<string> Keywords { get; set; } = new();
     }
 }
