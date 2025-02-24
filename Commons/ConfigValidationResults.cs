@@ -1,17 +1,16 @@
 ﻿using System.Collections.Generic;
 
 /*
-File: BatchProcessor\Core\Config\Validation\ValidationResults.cs
 Summary: Defines the ValidationResult class used to encapsulate the result of a validation operation.
          Contains an IsValid flag and a read-only list of error messages.
 */
 
-namespace BatchProcessor.Core.Config.Validation
+namespace Commons
 {
     /// <summary>
     /// Represents the result of a validation operation.
     /// </summary>
-    public class ValidationResult
+    public class ConfigValidationResult
     {
         /// <summary>
         /// Indicates whether the validation succeeded.
@@ -28,7 +27,7 @@ namespace BatchProcessor.Core.Config.Validation
         /// </summary>
         /// <param name="isValid">True if validation succeeded; otherwise, false.</param>
         /// <param name="errors">Collection of error messages.</param>
-        public ValidationResult(bool isValid, IReadOnlyList<string> errors)
+        public ConfigValidationResult(bool isValid, IReadOnlyList<string> errors)
         {
             IsValid = isValid;
             Errors = errors;
@@ -37,6 +36,6 @@ namespace BatchProcessor.Core.Config.Validation
         /// <summary>
         /// Gets a successful ValidationResult (true with no errors).
         /// </summary>
-        public static ValidationResult Success => new ValidationResult(true, new List<string>());
+        public static ConfigValidationResult Success => new ConfigValidationResult(true, new List<string>());
     }
 }
