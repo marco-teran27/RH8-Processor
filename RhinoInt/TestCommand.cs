@@ -10,13 +10,13 @@ namespace RhinoInt
     public class TestCommand : Command
     {
         private readonly IConfigSelector _configSelector;
-        private readonly IRhinoService _rhinoService; // Add this
+        private readonly IRhinoService _rhinoService;
 
         public TestCommand()
         {
             var serviceProvider = ServiceConfigurator.ConfigureServices();
             _configSelector = serviceProvider.GetService<IConfigSelector>();
-            _rhinoService = new RhinoService(); // Temporary, will use DI later
+            _rhinoService = new RhinoService();
         }
 
         internal TestCommand(IConfigSelector configSelector, IRhinoService rhinoService)
@@ -25,7 +25,7 @@ namespace RhinoInt
             _rhinoService = rhinoService ?? throw new ArgumentNullException(nameof(rhinoService));
         }
 
-        public override string EnglishName => "TestCommand";
+        public override string EnglishName => "BatchProcessor"; // Changed from TestCommand
 
         protected override Result RunCommand(RhinoDoc doc, RunMode mode)
         {
@@ -39,12 +39,12 @@ namespace RhinoInt
                 }
 
                 RhinoApp.WriteLine($"Selected config file: {configFilePath}");
-                _rhinoService.RunTestCommand(); // Use the service
+                _rhinoService.RunTestCommand();
                 return Result.Success;
             }
             catch (Exception ex)
             {
-                RhinoApp.WriteLine($"Error in TestCommand: {ex.Message}");
+                RhinoApp.WriteLine($"Error in BatchProcessor: {ex.Message}");
                 return Result.Failure;
             }
         }
