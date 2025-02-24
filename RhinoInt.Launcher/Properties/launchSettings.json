@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "R8Launcher": {
+      "commandName": "Executable",
+      "executablePath": "C:\\Program Files\\Rhino 8\\System\\Rhino.exe",
+      "commandLineArgs": "/nosplash\r\n/dotnet",
+      "workingDirectory": "C:\\Users\\marco.teran\\source\\repos\\RH8-Processor\\RhinoInt.Test\\bin\\Debug\\net7.0"
+    }
+  }
+}

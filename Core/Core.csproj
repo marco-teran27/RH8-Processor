@@ -6,4 +6,10 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+	<ItemGroup>
+		<ProjectReference Include="..\Interfaces\Interfaces.csproj" />
+		<ProjectReference Include="..\Config\Config.csproj" />
+		<ProjectReference Include="..\DInjection\DInjection.csproj" />
+	</ItemGroup>	
+	
 </Project>

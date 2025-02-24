@@ -12,6 +12,7 @@
     <TargetExt>.rhp</TargetExt>
     <NoWarn>NU1701;NETSDK1086</NoWarn>
     <EnableWindowsTargeting>true</EnableWindowsTargeting>
+	<Version>1.0.0</Version>
   </PropertyGroup>
   
   <PropertyGroup>
