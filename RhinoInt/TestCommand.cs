@@ -1,27 +1,28 @@
-﻿using System;
-using Microsoft.Extensions.DependencyInjection;
-using Rhino;
+﻿using Rhino;
 using Rhino.Commands;
 using Interfaces;
-using DInjection; // Add this
+using DInjection;
+using Microsoft.Extensions.DependencyInjection;
+using System;
 
 namespace RhinoInt
 {
     public class TestCommand : Command
     {
         private readonly IConfigSelector _configSelector;
+        private readonly IRhinoService _rhinoService; // Add this
 
-        // Constructor injection
         public TestCommand()
         {
             var serviceProvider = ServiceConfigurator.ConfigureServices();
             _configSelector = serviceProvider.GetService<IConfigSelector>();
+            _rhinoService = new RhinoService(); // Temporary, will use DI later
         }
 
-        // For testing, allow injection override
-        internal TestCommand(IConfigSelector configSelector)
+        internal TestCommand(IConfigSelector configSelector, IRhinoService rhinoService)
         {
             _configSelector = configSelector ?? throw new ArgumentNullException(nameof(configSelector));
+            _rhinoService = rhinoService ?? throw new ArgumentNullException(nameof(rhinoService));
         }
 
         public override string EnglishName => "TestCommand";
@@ -31,7 +32,6 @@ namespace RhinoInt
             try
             {
                 string configFilePath = _configSelector.SelectConfigFile();
-
                 if (string.IsNullOrEmpty(configFilePath))
                 {
                     RhinoApp.WriteLine("No config file selected. Command aborted.");
@@ -39,6 +39,7 @@ namespace RhinoInt
                 }
 
                 RhinoApp.WriteLine($"Selected config file: {configFilePath}");
+                _rhinoService.RunTestCommand(); // Use the service
                 return Result.Success;
             }
             catch (Exception ex)
