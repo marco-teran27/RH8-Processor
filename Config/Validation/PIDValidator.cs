@@ -4,7 +4,6 @@ using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text.RegularExpressions;
 using Config.Models;
-using BatchProcessor.DI.Interfaces.Config;
 
 namespace Config.Validation
 {

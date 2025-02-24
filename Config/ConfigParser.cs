@@ -48,10 +48,10 @@ namespace Config
         /// <returns>
         /// A tuple containing the deserialized config_Structure (or null on error) and a list of error messages.
         /// </returns>
-        public async Task<(config_Structure?, List<string>)> ParseConfigFileAsync(string filePath)
+        public async Task<(ConfigStructure?, List<string>)> ParseConfigFileAsync(string filePath)
         {
             var errors = new List<string>();
-            config_Structure? configRoot = null;
+            ConfigStructure? configRoot = null;
 
             try
             {
@@ -68,7 +68,7 @@ namespace Config
                 var jsonString = await File.ReadAllTextAsync(filePath);
 
                 // Deserialize the JSON into a config_Structure object.
-                configRoot = JsonSerializer.Deserialize<config_Structure>(jsonString, _jsonOptions);
+                configRoot = JsonSerializer.Deserialize<ConfigStructure>(jsonString, _jsonOptions);
                 if (configRoot == null)
                 {
                     var msg = "Deserialization returned null (invalid JSON format?).";
@@ -97,7 +97,7 @@ namespace Config
         /// <returns>
         /// A tuple containing the deserialized config_Structure (or null on error) and a list of error messages.
         /// </returns>
-        public (config_Structure?, List<string>) ParseConfigFile(string filePath)
+        public (ConfigStructure?, List<string>) ParseConfigFile(string filePath)
         {
             return ParseConfigFileAsync(filePath).GetAwaiter().GetResult();
         }
