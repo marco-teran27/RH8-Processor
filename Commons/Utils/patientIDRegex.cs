@@ -1,12 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Text.RegularExpressions;
 
 namespace Commons.Utils
 {
-    class patientIDRegex
+    public static class PatientIDRegex
     {
+        public static readonly Regex Pattern = new Regex(
+            @"^(\d{6}[LR])-([SR]\d{5})$",
+            RegexOptions.IgnoreCase | RegexOptions.Compiled
+        );
     }
 }

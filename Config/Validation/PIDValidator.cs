@@ -2,6 +2,10 @@
 using System.Collections.Generic;
 using Config.Models;
 using Config.Interfaces;
+using Commons.Utils;
+using Commons.Params;
+using System.Collections;
+using System.Net.NetworkInformation;
 
 namespace Config.Validation
 {
@@ -21,23 +25,52 @@ namespace Config.Validation
 
             bool allValid = true;
             var messages = new List<string>();
+            var pidStatuses = new List<PIDStatus>();
 
             if (string.IsNullOrWhiteSpace(pidSettings.Mode))
-                messages.Add("pid_settings.mode: missing");
+                messages.Add("mode: missing");
             else if (!string.Equals(pidSettings.Mode, "list", StringComparison.OrdinalIgnoreCase) &&
                      !string.Equals(pidSettings.Mode, "all", StringComparison.OrdinalIgnoreCase))
-                messages.Add($"pid_settings.mode '{pidSettings.Mode}': needs to be 'list' or 'all'");
+                messages.Add($"mode '{pidSettings.Mode}': needs to be 'list' or 'all'");
             else
-                messages.Add("pid_settings.mode: found");
+                messages.Add("mode: found");
 
             if (string.Equals(pidSettings.Mode, "all", StringComparison.OrdinalIgnoreCase))
-                messages.Add("pid_settings.pids: Bypassed by ALL");
+            {
+                messages.Add("pids: Bypassed by ALL");
+            }
             else if (pidSettings.Pids == null || pidSettings.Pids.Count == 0)
-                messages.Add("pid_settings.pids: missing");
+            {
+                messages.Add("pids: missing");
+                allValid = false;
+            }
             else
-                messages.Add("pid_settings.pids: found");
+            {
+                bool allPidsValid = true;
+                foreach (var pid in pidSettings.Pids)
+                {
+                    if (string.IsNullOrWhiteSpace(pid))
+                    {
+                        pidStatuses.Add(new PIDStatus(pid, false));
+                        allPidsValid = false;
+                    }
+                    else if (!PatientIDRegex.Pattern.IsMatch(pid))
+                    {
+                        pidStatuses.Add(new PIDStatus(pid, false));
+                        allPidsValid = false;
+                    }
+                    else
+                    {
+                        pidStatuses.Add(new PIDStatus(pid, true));
+                    }
+                }
+                messages.Add($"pids: {(allPidsValid ? "found with valid formatting" : "found with invalid formatting")}");
+                allValid &= allPidsValid;
+            }
 
-            allValid = !messages.Any(m => m.Contains("missing") || m.Contains("needs to be"));
+            PIDListFormat.Instance.SetPids(pidStatuses);
+            PIDList.Instance.CompileIds(pidSettings, rhinoFileNameSettings);
+
             return (allValid, messages);
         }
     }
