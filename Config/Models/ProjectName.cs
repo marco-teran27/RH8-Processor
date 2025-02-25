@@ -7,10 +7,10 @@ namespace Config.Models
     public class ProjectName
     {
         [JsonPropertyName("name")]
-        public string Name { get; set; }
+        public string Name { get; set; } = string.Empty;
 
         [JsonIgnore]
-        public string ActualConfigFileName { get; set; }
+        public string ActualConfigFileName { get; set; } = string.Empty;
     }
 
     public class ProjectNameConverter : JsonConverter<ProjectName>

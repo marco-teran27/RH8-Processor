@@ -18,10 +18,16 @@ namespace Config.Validation
             if (timeoutSettings == null)
                 return (false, "Timeout settings cannot be null.");
 
-            if (timeoutSettings.Minutes <= 0)
-                return (false, "timeout_settings.minutes must be greater than 0.");
+            bool allValid = true;
+            string messages = "";
 
-            return (true, string.Empty);
+            if (timeoutSettings.Minutes <= 0)
+                messages += "timeout_settings.minutes: missing or invalid (must be > 0); ";
+            else
+                messages += "timeout_settings.minutes: found; ";
+
+            allValid = !messages.Contains("missing");
+            return (allValid, messages.TrimEnd(';'));
         }
     }
 }

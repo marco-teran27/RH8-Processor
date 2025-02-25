@@ -2,6 +2,7 @@
 using Config;
 using Config.Interfaces;
 using Interfaces;
+using Commons.Logging;
 
 namespace DInjection
 {

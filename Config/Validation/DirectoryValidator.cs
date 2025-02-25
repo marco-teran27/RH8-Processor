@@ -19,22 +19,32 @@ namespace Config.Validation
             if (directories == null)
                 return (false, "Directory settings cannot be null.");
 
+            bool allValid = true;
+            string messages = "";
+
             if (string.IsNullOrWhiteSpace(directories.FileDir))
-                return (false, "file_dir cannot be empty in directory settings.");
-            if (!Directory.Exists(directories.FileDir))
-                return (false, $"file_dir '{directories.FileDir}' does not exist.");
+                messages += "file_dir: missing; ";
+            else if (!Directory.Exists(directories.FileDir))
+                messages += $"file_dir '{directories.FileDir}': missing; ";
+            else
+                messages += "file_dir: found; ";
 
             if (string.IsNullOrWhiteSpace(directories.OutputDir))
-                return (false, "output_dir cannot be empty in directory settings.");
-            if (!Directory.Exists(directories.OutputDir))
-                return (false, $"output_dir '{directories.OutputDir}' does not exist.");
+                messages += "output_dir: missing; ";
+            else if (!Directory.Exists(directories.OutputDir))
+                messages += $"output_dir '{directories.OutputDir}': missing; ";
+            else
+                messages += "output_dir: found; ";
 
             if (string.IsNullOrWhiteSpace(directories.ScriptDir))
-                return (false, "script_dir cannot be empty in directory settings.");
-            if (!Directory.Exists(directories.ScriptDir))
-                return (false, $"script_dir '{directories.ScriptDir}' does not exist.");
+                messages += "script_dir: missing; ";
+            else if (!Directory.Exists(directories.ScriptDir))
+                messages += $"script_dir '{directories.ScriptDir}': missing; ";
+            else
+                messages += "script_dir: found; ";
 
-            return (true, string.Empty);
+            allValid = !messages.Contains("missing");
+            return (allValid, messages.TrimEnd(';'));
         }
     }
 }

@@ -6,7 +6,7 @@ namespace Config.Models
     public class ScriptSettings
     {
         [JsonPropertyName("script_name")]
-        public string ScriptName { get; set; }
+        public string ScriptName { get; set; } = string.Empty;
 
         [JsonPropertyName("script_type")]
         [JsonConverter(typeof(JsonStringEnumConverter))]

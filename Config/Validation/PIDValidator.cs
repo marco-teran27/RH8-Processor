@@ -18,22 +18,26 @@ namespace Config.Validation
             if (pidSettings == null)
                 return (false, "PID settings cannot be null.");
 
+            bool allValid = true;
+            string messages = "";
+
             if (string.IsNullOrWhiteSpace(pidSettings.Mode))
-                return (false, "pid_settings.mode cannot be empty.");
+                messages += "pid_settings.mode: missing; ";
+            else if (!string.Equals(pidSettings.Mode, "list", StringComparison.OrdinalIgnoreCase) &&
+                     !string.Equals(pidSettings.Mode, "all", StringComparison.OrdinalIgnoreCase))
+                messages += $"pid_settings.mode '{pidSettings.Mode}': needs to be 'list' or 'all'; ";
+            else
+                messages += "pid_settings.mode: found; ";
 
-            if (!string.Equals(pidSettings.Mode, "list", StringComparison.OrdinalIgnoreCase))
-                return (false, $"pid_settings.mode '{pidSettings.Mode}' is not supported. Only 'list' is valid.");
+            if (string.Equals(pidSettings.Mode, "all", StringComparison.OrdinalIgnoreCase))
+                messages += "pid_settings.pids: Bypassed by ALL; ";
+            else if (pidSettings.Pids == null || pidSettings.Pids.Count == 0) // Fixed: Count for List<string>
+                messages += "pid_settings.pids: missing; ";
+            else
+                messages += "pid_settings.pids: found; ";
 
-            if (pidSettings.Pids == null || pidSettings.Pids.Length == 0)
-                return (false, "pid_settings.pids cannot be empty when mode is 'list'.");
-
-            foreach (var pid in pidSettings.Pids)
-            {
-                if (string.IsNullOrWhiteSpace(pid))
-                    return (false, "pid_settings.pids contains an empty or null PID.");
-            }
-
-            return (true, string.Empty);
+            allValid = !messages.Contains("missing") && !messages.Contains("needs to be");
+            return (allValid, messages.TrimEnd(';'));
         }
     }
 }

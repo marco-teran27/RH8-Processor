@@ -1,14 +1,6 @@
 ﻿using System;
-using System.Text.RegularExpressions;
-using Commons;
 using Config.Models;
 using Config.Interfaces;
-
-/*
-File: Config\Validation\RhinoFileNameValidator.cs
-Summary: Implements IValidator to validate Rhino file name settings.
-         Ensures mode is valid and settings match expected patterns (list or regex).
-*/
 
 namespace Config.Validation
 {
@@ -26,38 +18,26 @@ namespace Config.Validation
             if (rhinoFileNameSettings == null)
                 return (false, "Rhino file name settings cannot be null.");
 
+            bool allValid = true;
+            string messages = "";
+
             if (string.IsNullOrWhiteSpace(rhinoFileNameSettings.Mode))
-                return (false, "rhino_file_name_settings.mode cannot be empty.");
+                messages += "rhino_file_name_settings.mode: missing; ";
+            else if (!string.Equals(rhinoFileNameSettings.Mode, "list", StringComparison.OrdinalIgnoreCase) &&
+                     !string.Equals(rhinoFileNameSettings.Mode, "all", StringComparison.OrdinalIgnoreCase))
+                messages += $"rhino_file_name_settings.mode '{rhinoFileNameSettings.Mode}': needs to be 'list' or 'all'; ";
+            else
+                messages += "rhino_file_name_settings.mode: found; ";
 
-            var validModes = new[] { "list", "regex" };
-            if (!Array.Exists(validModes, m => string.Equals(m, rhinoFileNameSettings.Mode, StringComparison.OrdinalIgnoreCase)))
-                return (false, $"rhino_file_name_settings.mode '{rhinoFileNameSettings.Mode}' is not supported. Use 'list' or 'regex'.");
+            if (string.Equals(rhinoFileNameSettings.Mode, "all", StringComparison.OrdinalIgnoreCase))
+                messages += "rhino_file_name_settings.keywords: Bypassed by ALL; ";
+            else if (rhinoFileNameSettings.Keywords == null || rhinoFileNameSettings.Keywords.Count == 0)
+                messages += "rhino_file_name_settings.keywords: missing; ";
+            else
+                messages += "rhino_file_name_settings.keywords: found; ";
 
-            if (string.Equals(rhinoFileNameSettings.Mode, "list", StringComparison.OrdinalIgnoreCase))
-            {
-                if (rhinoFileNameSettings.Keywords == null || rhinoFileNameSettings.Keywords.Length == 0)
-                    return (false, "rhino_file_name_settings.keywords cannot be empty when mode is 'list'.");
-            }
-            else if (string.Equals(rhinoFileNameSettings.Mode, "regex", StringComparison.OrdinalIgnoreCase))
-            {
-                if (string.IsNullOrWhiteSpace(rhinoFileNameSettings.RhinoFileNamePattern))
-                    return (false, "rhino_file_name_settings.rhino_file_name_pattern cannot be empty when mode is 'regex'.");
-
-                try
-                {
-                    // Test if the pattern is a valid regex
-                    var regex = new Regex(rhinoFileNameSettings.RhinoFileNamePattern);
-                    // Optionally test against RhinoNameRegex pattern to ensure compatibility
-                    if (!RhinoNameRegex.RhinoFilePattern.IsMatch("300000L-S12345-damold-001")) // Sample valid file name
-                        return (false, $"rhino_file_name_settings.rhino_file_name_pattern '{rhinoFileNameSettings.RhinoFileNamePattern}' does not align with expected Rhino file name format.");
-                }
-                catch (ArgumentException)
-                {
-                    return (false, $"rhino_file_name_settings.rhino_file_name_pattern '{rhinoFileNameSettings.RhinoFileNamePattern}' is not a valid regex pattern.");
-                }
-            }
-
-            return (true, string.Empty);
+            allValid = !messages.Contains("missing") && !messages.Contains("needs to be");
+            return (allValid, messages.TrimEnd(';'));
         }
     }
 }

@@ -7,6 +7,7 @@ using Config.Models;
 using Config.Validation;
 using Config.Interfaces;
 using Commons;
+using System.ComponentModel.DataAnnotations;
 
 namespace Config
 {
@@ -19,7 +20,10 @@ namespace Config
                 Console.WriteLine($"Starting ParseConfigAsync with path: {configPath}");
                 Console.WriteLine("Checking file existence...");
                 if (!File.Exists(configPath))
-                    return Task.FromResult(new ConfigValidationResults(false, new[] { $"File does not exist: {configPath}" }));
+                    return Task.FromResult(new ConfigValidationResults(
+                        false,
+                        new[] { $"File does not exist: {configPath}" },
+                        new List<ValidatorResult>()));
 
                 Console.WriteLine("Reading config file synchronously...");
                 var jsonString = File.ReadAllText(configPath);
@@ -28,7 +32,10 @@ namespace Config
                 Console.WriteLine("Deserialization completed.");
 
                 if (config == null)
-                    return Task.FromResult(new ConfigValidationResults(false, new[] { "Failed to parse configuration." }));
+                    return Task.FromResult(new ConfigValidationResults(
+                        false,
+                    new[] { "Failed to parse configuration." },
+                        new List<ValidatorResult>()));
 
                 config.ProjectName.ActualConfigFileName = Path.GetFileName(configPath);
                 Console.WriteLine("ActualConfigFileName set, initializing validators...");
@@ -52,12 +59,18 @@ namespace Config
             catch (JsonException ex)
             {
                 Console.WriteLine($"JSON parsing error: {ex.Message}");
-                return Task.FromResult(new ConfigValidationResults(false, new[] { $"JSON parsing error: {ex.Message}" }));
+                return Task.FromResult(new ConfigValidationResults(
+                    false,
+                    new[] { $"JSON parsing error: {ex.Message}" },
+                    new List<ValidatorResult>()));
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Unexpected error: {ex.Message}");
-                return Task.FromResult(new ConfigValidationResults(false, new[] { $"Unexpected error: {ex.Message}" }));
+                return Task.FromResult(new ConfigValidationResults(
+                    false,
+                    new[] { $"Unexpected error: {ex.Message}" },
+                    new List<ValidatorResult>()));
             }
         }
     }

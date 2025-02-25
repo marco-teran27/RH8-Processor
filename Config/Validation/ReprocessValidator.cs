@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using Config.Models;
 using Config.Interfaces;
 
@@ -18,18 +19,31 @@ namespace Config.Validation
             if (reprocessSettings == null)
                 return (false, "Reprocess settings cannot be null.");
 
+            bool allValid = true;
+            string messages = "";
+
             if (string.IsNullOrWhiteSpace(reprocessSettings.Mode))
-                return (false, "reprocess_settings.mode cannot be empty.");
+                messages += "reprocess_settings.mode: missing; ";
+            else
+            {
+                var validModes = new[] { "ALL", "PASS", "FAIL", "RESUME" };
+                if (!Array.Exists(validModes, m => string.Equals(m, reprocessSettings.Mode, StringComparison.OrdinalIgnoreCase)))
+                    messages += $"reprocess_settings.mode '{reprocessSettings.Mode}': needs to be 'ALL', 'PASS', 'FAIL', or 'RESUME'; ";
+                else
+                    messages += "reprocess_settings.mode: found; ";
+            }
 
-            var validModes = new[] { "all", "selective" };
-            if (!Array.Exists(validModes, m => string.Equals(m, reprocessSettings.Mode, StringComparison.OrdinalIgnoreCase)))
-                return (false, $"reprocess_settings.mode '{reprocessSettings.Mode}' is not supported. Use 'all' or 'selective'.");
+            if (string.Equals(reprocessSettings.Mode, "ALL", StringComparison.OrdinalIgnoreCase))
+                messages += "reprocess_settings.reference_log: Bypassed by ALL; ";
+            else if (string.IsNullOrWhiteSpace(reprocessSettings.ReferenceLog))
+                messages += "reprocess_settings.reference_log: Path to reference log file is missing; ";
+            else if (!File.Exists(reprocessSettings.ReferenceLog))
+                messages += $"reprocess_settings.reference_log '{reprocessSettings.ReferenceLog}': missing; ";
+            else
+                messages += $"reprocess_settings.reference_log '{reprocessSettings.ReferenceLog}': found; ";
 
-            if (string.Equals(reprocessSettings.Mode, "selective", StringComparison.OrdinalIgnoreCase) &&
-                string.IsNullOrWhiteSpace(reprocessSettings.ReferenceLog))
-                return (false, "reprocess_settings.reference_log cannot be empty when mode is 'selective'.");
-
-            return (true, string.Empty);
+            allValid = !messages.Contains("missing") && !messages.Contains("needs to be");
+            return (allValid, messages.TrimEnd(';'));
         }
     }
 }

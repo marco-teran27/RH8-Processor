@@ -20,17 +20,38 @@ namespace Config.Validation
             if (scriptSettings == null)
                 return (false, "Script settings cannot be null.");
 
+            bool allValid = true;
+            string messages = "";
+
             if (string.IsNullOrWhiteSpace(scriptSettings.ScriptName))
-                return (false, "script_settings.script_name cannot be empty.");
+                messages += "script_settings.script_name: missing; ";
+            else
+                messages += "script_settings.script_name: found; ";
 
-            var scriptPath = Path.Combine(directories.ScriptDir, scriptSettings.ScriptName);
-            if (!File.Exists(scriptPath))
-                return (false, $"Script file '{scriptPath}' does not exist.");
+            string? extension = scriptSettings.ScriptType switch
+            {
+                ScriptType.Python => ".py",
+                ScriptType.Grasshopper => ".gh",
+                ScriptType.GrasshopperXml => ".ghx",
+                _ => null
+            };
 
-            if (scriptSettings.ScriptType != ScriptType.Python && scriptSettings.ScriptType != ScriptType.Grasshopper)
-                return (false, "script_settings.script_type must be 'Python' or 'Grasshopper'.");
+            if (extension == null)
+                messages += "script_settings.script_type: needs to be 'Python', 'Grasshopper', or 'GrasshopperXml'; ";
+            else
+                messages += "script_settings.script_type: found; ";
 
-            return (true, string.Empty);
+            if (extension != null)
+            {
+                var scriptPath = Path.Combine(directories.ScriptDir, $"{scriptSettings.ScriptName}{extension}");
+                if (!File.Exists(scriptPath))
+                    messages += $"script_settings script file '{scriptPath}': missing; ";
+                else
+                    messages += $"script_settings script file '{scriptPath}': found; ";
+            }
+
+            allValid = !messages.Contains("missing") && !messages.Contains("needs to be");
+            return (allValid, messages.TrimEnd(';'));
         }
     }
 }

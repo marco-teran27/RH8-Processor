@@ -39,9 +39,8 @@ namespace RhinoInt
             RhinoApp.WriteLine("Entering RunCommand...");
             try
             {
-                // Temporary synchronous call
                 var task = _orchestrator.RunBatchAsync(null, CancellationToken.None);
-                task.Wait(); // Safer than GetAwaiter().GetResult(), still sync but less prone to deadlock
+                task.Wait();
                 bool success = task.Result;
                 RhinoApp.WriteLine("RunBatchAsync completed.");
                 return success ? Result.Success : Result.Failure;

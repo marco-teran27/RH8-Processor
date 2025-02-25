@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Config.Models;
 using Commons;
 using Config.Interfaces;
+using System.ComponentModel.DataAnnotations;
 
 namespace Config.Validation
 {
@@ -18,6 +19,7 @@ namespace Config.Validation
         public ConfigValidationResults ValidateConfig(ConfigStructure config, string configPath)
         {
             var errorMessages = new List<string>();
+            var validatorResults = new List<ValidatorResult>();
 
             foreach (var validator in _validators)
             {
@@ -30,11 +32,17 @@ namespace Config.Validation
                     config.ReprocessSettings,
                     config.TimeoutSettings);
 
+                var validatorName = validator.GetType().Name.Replace("Validator", "");
+                validatorResults.Add(new ValidatorResult(validatorName, isValid, isValid ? "Passed" : errorMessage));
+
                 if (!isValid && !string.IsNullOrEmpty(errorMessage))
                     errorMessages.Add(errorMessage);
             }
 
-            return new ConfigValidationResults(errorMessages.Count == 0, errorMessages);
+            return new ConfigValidationResults(
+                errorMessages.Count == 0,
+                errorMessages,
+                validatorResults);
         }
     }
 }

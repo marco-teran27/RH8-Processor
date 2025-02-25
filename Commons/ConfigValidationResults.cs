@@ -1,41 +1,15 @@
-﻿using System.Collections.Generic;
-
-/*
-Summary: Defines the ValidationResult class used to encapsulate the result of a validation operation.
-         Contains an IsValid flag and a read-only list of error messages.
-*/
-
-namespace Commons
+﻿namespace Commons
 {
     /// <summary>
-    /// Represents the result of a validation operation.
+    /// Represents the result of an individual validator's operation.
     /// </summary>
-    public class ConfigValidationResults
-    {
-        /// <summary>
-        /// Indicates whether the validation succeeded.
-        /// </summary>
-        public bool IsValid { get; }
+    public record ValidatorResult(string ValidatorName, bool IsValid, string Message);
 
-        /// <summary>
-        /// Read-only collection of error messages.
-        /// </summary>
-        public IReadOnlyList<string> Errors { get; }
-
-        /// <summary>
-        /// Initializes a new instance of the ValidationResult class.
-        /// </summary>
-        /// <param name="isValid">True if validation succeeded; otherwise, false.</param>
-        /// <param name="errors">Collection of error messages.</param>
-        public ConfigValidationResults(bool isValid, IReadOnlyList<string> errors)
-        {
-            IsValid = isValid;
-            Errors = errors;
-        }
-
-        /// <summary>
-        /// Gets a successful ValidationResult (true with no errors).
-        /// </summary>
-        public static ConfigValidationResults Success => new ConfigValidationResults(true, new List<string>());
-    }
+    /// <summary>
+    /// Represents the result of a validation operation, including overall status and individual validator results.
+    /// </summary>
+    public record ConfigValidationResults(
+        bool IsValid,
+        IReadOnlyList<string> Errors,
+        IReadOnlyList<ValidatorResult> ValidatorResults);
 }

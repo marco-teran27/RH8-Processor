@@ -5,9 +5,9 @@ namespace Config.Models
     public class PIDSettings
     {
         [JsonPropertyName("mode")]
-        public string Mode { get; set; }
+        public string Mode { get; set; } = string.Empty;
 
         [JsonPropertyName("pids")]
-        public string[] Pids { get; set; }
+        public List<string> Pids { get; set; } = new();
     }
 }
