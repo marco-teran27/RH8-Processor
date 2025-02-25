@@ -1,6 +1,6 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
-using Config.Interfaces;
 using Config;
+using Config.Interfaces;
 using Interfaces;
 
 namespace DInjection

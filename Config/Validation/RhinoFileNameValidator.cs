@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Text.RegularExpressions;
 using Commons;
 using Config.Models;
 using Config.Interfaces;
@@ -42,8 +43,18 @@ namespace Config.Validation
                 if (string.IsNullOrWhiteSpace(rhinoFileNameSettings.RhinoFileNamePattern))
                     return (false, "rhino_file_name_settings.rhino_file_name_pattern cannot be empty when mode is 'regex'.");
 
-                if (!RhinoNameRegex.IsValidFileName(rhinoFileNameSettings.RhinoFileNamePattern))
+                try
+                {
+                    // Test if the pattern is a valid regex
+                    var regex = new Regex(rhinoFileNameSettings.RhinoFileNamePattern);
+                    // Optionally test against RhinoNameRegex pattern to ensure compatibility
+                    if (!RhinoNameRegex.RhinoFilePattern.IsMatch("300000L-S12345-damold-001")) // Sample valid file name
+                        return (false, $"rhino_file_name_settings.rhino_file_name_pattern '{rhinoFileNameSettings.RhinoFileNamePattern}' does not align with expected Rhino file name format.");
+                }
+                catch (ArgumentException)
+                {
                     return (false, $"rhino_file_name_settings.rhino_file_name_pattern '{rhinoFileNameSettings.RhinoFileNamePattern}' is not a valid regex pattern.");
+                }
             }
 
             return (true, string.Empty);

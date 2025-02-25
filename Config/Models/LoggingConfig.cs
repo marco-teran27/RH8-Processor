@@ -1,52 +1,19 @@
 using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
 using System.IO;
-using Config.Validation;
-
-/*
-File: BatchProcessor\Core\Config\Models\config_Logging.cs
-Summary: Represents logging configuration settings that control how logging is managed.
-         Provides a Validate() method to check configuration integrity, returning a ValidationResult.
-*/
+using Commons;
 
 namespace Config.Models
 {
-    /// <summary>
-    /// Represents configuration settings for logging.
-    /// </summary>
     public class LoggingConfig
     {
-        /// <summary>
-        /// Number of command line output lines to buffer.
-        /// </summary>
         public int CommandLineBufferSize { get; set; } = 1000;
-
-        /// <summary>
-        /// Enables detailed debug logging.
-        /// </summary>
         public bool EnableDebugLogging { get; set; } = false;
-
-        /// <summary>
-        /// Directory path for log file storage.
-        /// </summary>
         public string LogDirectory { get; set; } = string.Empty;
-
-        /// <summary>
-        /// Indicates whether to keep completion files after processing.
-        /// </summary>
         public bool PreserveCompletionFiles { get; set; } = false;
-
-        /// <summary>
-        /// Maximum size in bytes for a single log file.
-        /// </summary>
         public int MaxLogFileSize { get; set; } = 10 * 1024 * 1024; // 10MB default
 
-        /// <summary>
-        /// Validates the logging configuration settings.
-        /// </summary>
-        /// <returns>A ValidationResult indicating whether the configuration is valid, and any error messages.</returns>
-        public ValidationResult Validate()
+        public ConfigValidationResults Validate()
         {
             var errors = new List<string>();
 
@@ -59,7 +26,7 @@ namespace Config.Models
             if (!string.IsNullOrEmpty(LogDirectory) && !Directory.Exists(LogDirectory))
                 errors.Add($"Log directory not found: {LogDirectory}");
 
-            return new ValidationResult(errors.Count == 0, errors);
+            return new ConfigValidationResults(errors.Count == 0, errors);
         }
     }
 }

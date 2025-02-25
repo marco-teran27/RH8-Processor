@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using Config.Models;
 using Commons;
+using Config.Models;
 using Config.Interfaces;
 
 namespace Config.Validation
@@ -23,8 +23,8 @@ namespace Config.Validation
             {
                 var (isValid, errorMessage) = validator.ValidateConfig(
                     config.ProjectName,
-                    config.DirectorySettings,
-                    config.PIDSettings,
+                    config.Directories,      // Fixed from DirectorySettings
+                    config.PidSettings,      // Fixed from PIDSettings
                     config.RhinoFileNameSettings,
                     config.ScriptSettings,
                     config.ReprocessSettings,
@@ -34,11 +34,7 @@ namespace Config.Validation
                     errorMessages.Add(errorMessage);
             }
 
-            return new ConfigValidationResults(
-                errorMessages.Count == 0,
-                errorMessages,
-                errorMessages.Count == 0 ? config : null,
-                configPath);
+            return new ConfigValidationResults(errorMessages.Count == 0, errorMessages);
         }
     }
 }

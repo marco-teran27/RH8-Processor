@@ -1,8 +1,8 @@
 ﻿using System;
 using System.IO;
 using Config.Models;
-using Config.Interfaces;
 using Commons;
+using Config.Interfaces;
 
 namespace Config.Validation
 {
@@ -27,7 +27,7 @@ namespace Config.Validation
             if (!File.Exists(scriptPath))
                 return (false, $"Script file '{scriptPath}' does not exist.");
 
-            if (scriptSettings.ScriptType == ScriptType.Unknown)
+            if (scriptSettings.ScriptType != ScriptType.Python && scriptSettings.ScriptType != ScriptType.Grasshopper)
                 return (false, "script_settings.script_type must be 'Python' or 'Grasshopper'.");
 
             return (true, string.Empty);

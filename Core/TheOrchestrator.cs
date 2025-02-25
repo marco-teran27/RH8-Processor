@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Config.Interfaces;
 using Interfaces;
 using Config;
+using Commons; // Added for ConfigValidationResults
 
 namespace Core
 {
@@ -38,12 +39,12 @@ namespace Core
                 var configResult = await _parser.ParseConfigAsync(configPath);
                 if (!configResult.IsValid)
                 {
-                    foreach (var msg in configResult.ValidationMessages)
+                    foreach (var msg in configResult.Errors) // Changed from ValidationMessages
                         _rhino.ShowError(msg);
                     return false;
                 }
 
-                _rhino.ShowMessage($"Config parsed and validated from {configResult.FilePath}");
+                _rhino.ShowMessage($"Config parsed and validated from {configPath}"); // Changed from configResult.FilePath
                 return true;
             }
             catch (Exception ex)

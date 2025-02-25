@@ -8,7 +8,7 @@ using Config.Validation;
 using Config.Interfaces;
 using Commons;
 
-namespace Config.ConfigJSON
+namespace Config
 {
     public class ConfigParser : IConfigParser
     {
