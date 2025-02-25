@@ -1,116 +1,52 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Text.RegularExpressions;
 using Commons;
 using Config.Models;
+using Config.Interfaces;
 
 /*
-File: BatchProcessor\Core\Config\Validation\RhinoFileNameValidator.cs
-Summary: Implements IRhinoFileNameValidator to validate Rhino file name settings and individual file names.
-         Returns a ValidationResult for configuration validation.
+File: Config\Validation\RhinoFileNameValidator.cs
+Summary: Implements IValidator to validate Rhino file name settings.
+         Ensures mode is valid and settings match expected patterns (list or regex).
 */
 
 namespace Config.Validation
 {
-    /// <summary>
-    /// Validates Rhino file name settings and individual file names.
-    /// </summary>
-    public class RhinoFileNameValidator : IRhinoFileNameValidator
+    public class RhinoFileNameValidator : IValidator
     {
-        private static readonly Regex ConfigFilePattern = new Regex(
-            @"^config-(.+)\.json$",
-            RegexOptions.Compiled | RegexOptions.IgnoreCase
-        );
-
-        /// <summary>
-        /// Checks if a config file name is valid and extracts the project name.
-        /// </summary>
-        /// <param name="fileName">The configuration file name.</param>
-        /// <param name="projectName">Output project name if valid.</param>
-        /// <returns>True if valid; otherwise, false.</returns>
-        public bool IsValidConfigFileName(string fileName, out string? projectName)
+        public (bool isValid, string errorMessage) ValidateConfig(
+            ProjectName projectName,
+            DirectorySettings directories,
+            PIDSettings pidSettings,
+            RhinoFileNameSettings rhinoFileNameSettings,
+            ScriptSettings scriptSettings,
+            ReprocessSettings reprocessSettings,
+            TimeOutSettings timeoutSettings)
         {
-            projectName = null;
-            if (string.IsNullOrWhiteSpace(fileName))
-                return false;
+            if (rhinoFileNameSettings == null)
+                return (false, "Rhino file name settings cannot be null.");
 
-            var match = ConfigFilePattern.Match(fileName);
-            if (!match.Success)
-                return false;
+            if (string.IsNullOrWhiteSpace(rhinoFileNameSettings.Mode))
+                return (false, "rhino_file_name_settings.mode cannot be empty.");
 
-            projectName = match.Groups[1].Value;
-            return true;
-        }
+            var validModes = new[] { "list", "regex" };
+            if (!Array.Exists(validModes, m => string.Equals(m, rhinoFileNameSettings.Mode, StringComparison.OrdinalIgnoreCase)))
+                return (false, $"rhino_file_name_settings.mode '{rhinoFileNameSettings.Mode}' is not supported. Use 'list' or 'regex'.");
 
-        /// <summary>
-        /// Checks if a Rhino file name matches the expected pattern.
-        /// </summary>
-        /// <param name="fileName">The file name to validate.</param>
-        /// <param name="parts">Output tuple containing (pid, keyword, srNumber) if valid.</param>
-        /// <returns>True if valid; otherwise, false.</returns>
-        public bool IsValidRhinoFileName(string fileName, out (string pid, string keyword, string srNumber) parts)
-        {
-            parts = default;
-            if (string.IsNullOrWhiteSpace(fileName))
-                return false;
-
-            var match = RhinoNameRegex.RhinoFilePattern.Match(fileName);
-            if (!match.Success)
-                return false;
-
-            parts = (
-                pid: match.Groups[1].Value + match.Groups[2].Value,
-                keyword: match.Groups[3].Value,
-                srNumber: match.Groups[4].Value
-            );
-            return true;
-        }
-
-        /// <summary>
-        /// Validates the Rhino file name settings.
-        /// </summary>
-        /// <param name="settings">The Rhino file name settings to validate.</param>
-        /// <returns>A ValidationResult indicating whether the settings are valid.</returns>
-        public ValidationResult ValidateConfig(RhinoFileNameSettings settings)
-        {
-            var errors = new List<string>();
-
-            if (settings == null)
+            if (string.Equals(rhinoFileNameSettings.Mode, "list", StringComparison.OrdinalIgnoreCase))
             {
-                errors.Add("RhinoFileNameSettings is null.");
-                return new ValidationResult(false, errors);
+                if (rhinoFileNameSettings.Keywords == null || rhinoFileNameSettings.Keywords.Length == 0)
+                    return (false, "rhino_file_name_settings.keywords cannot be empty when mode is 'list'.");
+            }
+            else if (string.Equals(rhinoFileNameSettings.Mode, "regex", StringComparison.OrdinalIgnoreCase))
+            {
+                if (string.IsNullOrWhiteSpace(rhinoFileNameSettings.RhinoFileNamePattern))
+                    return (false, "rhino_file_name_settings.rhino_file_name_pattern cannot be empty when mode is 'regex'.");
+
+                if (!RhinoNameRegex.IsValidFileName(rhinoFileNameSettings.RhinoFileNamePattern))
+                    return (false, $"rhino_file_name_settings.rhino_file_name_pattern '{rhinoFileNameSettings.RhinoFileNamePattern}' is not a valid regex pattern.");
             }
 
-            if (string.IsNullOrWhiteSpace(settings.Mode))
-            {
-                errors.Add("File name mode cannot be empty.");
-            }
-            else if (!IsValidMode(settings.Mode))
-            {
-                errors.Add($"Invalid file name mode: {settings.Mode}. Must be 'list' or 'all'.");
-            }
-
-            if (settings.Mode.Equals("list", StringComparison.OrdinalIgnoreCase))
-            {
-                if (settings.Keywords == null || settings.Keywords.Count == 0)
-                {
-                    errors.Add("Keywords list cannot be empty when mode is 'list'.");
-                }
-            }
-
-            return new ValidationResult(errors.Count == 0, errors);
-        }
-
-        /// <summary>
-        /// Checks if the file name mode is valid.
-        /// </summary>
-        /// <param name="mode">The mode string.</param>
-        /// <returns>True if valid; otherwise, false.</returns>
-        private bool IsValidMode(string mode)
-        {
-            return mode.Equals("list", StringComparison.OrdinalIgnoreCase) ||
-                   mode.Equals("all", StringComparison.OrdinalIgnoreCase);
+            return (true, string.Empty);
         }
     }
 }

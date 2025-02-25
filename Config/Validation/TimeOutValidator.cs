@@ -1,36 +1,27 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-
-/*
-File: BatchProcessor\Core\Config\Validation\TimeOutValidator.cs
-Summary: Implements ITimeOutValidator to validate that the timeout value (in minutes)
-         is a positive integer. Returns a ValidationResult without directly using ICommLineOut.
-*/
+using Config.Models;
+using Config.Interfaces;
 
 namespace Config.Validation
 {
-    /// <summary>
-    /// Provides validation for the numeric "minutes" field in timeout settings.
-    /// </summary>
-    public class TimeOutValidator : ITimeOutValidator
+    public class TimeOutValidator : IValidator
     {
-        /// <summary>
-        /// Validates that the specified timeout in minutes is a positive integer.
-        /// </summary>
-        /// <param name="timeoutMinutes">The timeout value to validate.</param>
-        /// <returns>A ValidationResult indicating whether the timeout value is valid.</returns>
-        public ValidationResult ValidateTimeout(int timeoutMinutes)
+        public (bool isValid, string errorMessage) ValidateConfig(
+            ProjectName projectName,
+            DirectorySettings directories,
+            PIDSettings pidSettings,
+            RhinoFileNameSettings rhinoFileNameSettings,
+            ScriptSettings scriptSettings,
+            ReprocessSettings reprocessSettings,
+            TimeOutSettings timeoutSettings)
         {
-            var errors = new List<string>();
+            if (timeoutSettings == null)
+                return (false, "Timeout settings cannot be null.");
 
-            if (timeoutMinutes <= 0)
-            {
-                string msg = "Configuration Error: 'minutes' in 'timeout_settings' must be a positive integer.";
-                errors.Add(msg);
-            }
+            if (timeoutSettings.Minutes <= 0)
+                return (false, "timeout_settings.minutes must be greater than 0.");
 
-            return new ValidationResult(errors.Count == 0, errors);
+            return (true, string.Empty);
         }
     }
 }

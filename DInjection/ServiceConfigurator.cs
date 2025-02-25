@@ -1,4 +1,6 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
+using Config.Interfaces;
+using Config;
 using Interfaces;
 
 namespace DInjection
@@ -7,9 +9,9 @@ namespace DInjection
     {
         public static IServiceCollection ConfigureServices(IServiceCollection services)
         {
-            // Only register non-Rhino dependencies here
-            services.AddTransient<IConfigSelector, Config.ConfigSelUI>();
-            services.AddTransient<IConfigParser, Config.PlaceholderConfigParser>();
+            services.AddSingleton<IConfigState, ConfigState>();
+            services.AddTransient<IConfigSelUI, ConfigSelUI>();
+            services.AddTransient<IConfigParser, ConfigParser>();
             services.AddTransient<ITheOrchestrator, Core.TheOrchestrator>();
             return services;
         }

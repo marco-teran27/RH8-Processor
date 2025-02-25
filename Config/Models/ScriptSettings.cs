@@ -1,31 +1,15 @@
-using System;
-using System.Collections.Generic;
-using System.IO;
 using System.Text.Json.Serialization;
-using Config.Validation;
 using Commons;
 
-/// <summary>
-/// Holds the script settings for batch processing.
-/// 
-/// Summary:
-/// This model contains the script file name and type. Its validation is handled by
-/// the ScriptSettingsValidator in the validation modules.
-/// </summary>
 namespace Config.Models
 {
     public class ScriptSettings
     {
-        /// <summary>
-        /// The name of the script file (without extension).
-        /// </summary>
         [JsonPropertyName("script_name")]
-        public string ScriptName { get; set; } = string.Empty;
+        public string ScriptName { get; set; }
 
-        /// <summary>
-        /// The type of the script (e.g., Python, Grasshopper, etc.).
-        /// </summary>
         [JsonPropertyName("script_type")]
-        public ScriptType ScriptType { get; set; } = ScriptType.Python;
+        [JsonConverter(typeof(JsonStringEnumConverter))]
+        public ScriptType ScriptType { get; set; }
     }
 }

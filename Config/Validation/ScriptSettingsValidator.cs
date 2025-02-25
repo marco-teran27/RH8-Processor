@@ -1,61 +1,36 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
 using System.IO;
-using Commons;
 using Config.Models;
+using Commons;
+using Config.Interfaces;
 
 namespace Config.Validation
 {
-    /// <summary>
-    /// Validates the script settings configuration.
-    /// 
-    /// This version uses the ValidationResult pipeline for error reporting.
-    /// The dependency on ICommLineOut has been removed so that no direct command-line output occurs.
-    /// </summary>
-    public class ScriptSettingsValidator : IScriptSettingsValidator
+    public class ScriptSettingsValidator : IValidator
     {
-        // ICommLineOut dependency removed; errors are now added to the ValidationResult.
-
-        /// <summary>
-        /// Validates the provided script settings against the expected script directory.
-        /// </summary>
-        /// <param name="settings">The script settings to validate.</param>
-        /// <param name="scriptDir">The directory in which the script is expected to reside.</param>
-        /// <returns>A ValidationResult indicating whether the settings are valid and containing any error messages.</returns>
-        public ValidationResult ValidateConfig(ScriptSettings settings, string scriptDir)
+        public (bool isValid, string errorMessage) ValidateConfig(
+            ProjectName projectName,
+            DirectorySettings directories,
+            PIDSettings pidSettings,
+            RhinoFileNameSettings rhinoFileNameSettings,
+            ScriptSettings scriptSettings,
+            ReprocessSettings reprocessSettings,
+            TimeOutSettings timeoutSettings)
         {
-            var errors = new List<string>();
+            if (scriptSettings == null)
+                return (false, "Script settings cannot be null.");
 
-            // Validate script name is provided.
-            if (string.IsNullOrWhiteSpace(settings.ScriptName))
-            {
-                errors.Add("Script name cannot be empty");
-            }
+            if (string.IsNullOrWhiteSpace(scriptSettings.ScriptName))
+                return (false, "script_settings.script_name cannot be empty.");
 
-            // Validate that the provided script type is a defined enum value.
-            if (!Enum.IsDefined(typeof(ScriptType), settings.ScriptType))
-            {
-                errors.Add($"Invalid script type: {settings.ScriptType}");
-            }
-
-            // Determine file extension based on script type.
-            string extension = settings.ScriptType switch
-            {
-                ScriptType.Python => ".py",
-                ScriptType.Grasshopper => ".gh",
-                ScriptType.GrasshopperXml => ".ghx",
-                _ => throw new ArgumentException($"Unsupported script type: {settings.ScriptType}")
-            };
-
-            // Build the expected script file path and check for its existence.
-            var scriptPath = Path.Combine(scriptDir, $"{settings.ScriptName}{extension}");
+            var scriptPath = Path.Combine(directories.ScriptDir, scriptSettings.ScriptName);
             if (!File.Exists(scriptPath))
-            {
-                errors.Add($"Script file not found: {scriptPath}");
-            }
+                return (false, $"Script file '{scriptPath}' does not exist.");
 
-            return new ValidationResult(errors.Count == 0, errors);
+            if (scriptSettings.ScriptType == ScriptType.Unknown)
+                return (false, "script_settings.script_type must be 'Python' or 'Grasshopper'.");
+
+            return (true, string.Empty);
         }
     }
 }

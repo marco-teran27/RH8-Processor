@@ -1,72 +1,39 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
+using Commons;
 using Config.Models;
-
-/*
-File: BatchProcessor\Core\Config\Validation\ProjectNameValidator.cs
-Summary: Implements IProjectNameValidator to verify that the project name provided in the JSON config
-         is non-empty and matches the substring extracted from the actual configuration file name.
-         This module returns a ValidationResult to report validation status and errors.
-*/
+using Config.Interfaces;
 
 namespace Config.Validation
 {
-    /// <summary>
-    /// Validates the project name by ensuring that:
-    /// 1) The JSON project name is not empty.
-    /// 2) The actual config file name is provided and follows the naming convention "config-{ProjectName}.json".
-    /// 3) The project name extracted from the file name matches the JSON project name.
-    /// </summary>
-    public class ProjectNameValidator : IProjectNameValidator
+    public class ProjectNameValidator : IValidator
     {
-        /// <summary>
-        /// Validates the given <see cref="ProjectName"/> instance.
-        /// </summary>
-        /// <param name="projectName">
-        /// The <see cref="ProjectName"/> object containing the JSON project name and the actual config file name.
-        /// </param>
-        /// <returns>
-        /// A <see cref="ValidationResult"/> indicating whether the project name is valid, and containing any error messages.
-        /// </returns>
-        public ValidationResult ValidateConfig(ProjectName projectName)
+        public (bool isValid, string errorMessage) ValidateConfig(
+            ProjectName projectName,
+            DirectorySettings directories,
+            PIDSettings pidSettings,
+            RhinoFileNameSettings rhinoFileNameSettings,
+            ScriptSettings scriptSettings,
+            ReprocessSettings reprocessSettings,
+            TimeOutSettings timeoutSettings)
         {
-            var errors = new List<string>();
+            return Validate(projectName, projectName.ActualConfigFileName);
+        }
 
-            // 1) Check that the JSON project name is provided.
+        public static (bool isValid, string errorMessage) Validate(ProjectName projectName, string actualConfigFileName)
+        {
             if (string.IsNullOrWhiteSpace(projectName.Name))
-            {
-                errors.Add("projectName cannot be empty in the JSON config.");
-            }
+                return (false, "projectName cannot be empty in the JSON config.");
 
-            // 2) Ensure that the actual config file name is provided.
-            if (string.IsNullOrWhiteSpace(projectName.ActualConfigFileName))
-            {
-                errors.Add("Actual config file name is missing (could not validate).");
-            }
-            else
-            {
-                // 3) Confirm the file name follows the "config-{ProjectName}.json" pattern.
-                var fileNameLower = projectName.ActualConfigFileName.ToLowerInvariant();
-                if (!fileNameLower.StartsWith("config-") || !fileNameLower.EndsWith(".json"))
-                {
-                    errors.Add($"Config file '{projectName.ActualConfigFileName}' does not follow 'config-{{ProjectName}}.json' naming.");
-                }
-                else
-                {
-                    // Extract the substring between "config-" and ".json".
-                    var expectedName = projectName.ActualConfigFileName
-                        .Replace("config-", "", StringComparison.OrdinalIgnoreCase)
-                        .Replace(".json", "", StringComparison.OrdinalIgnoreCase);
+            if (string.IsNullOrWhiteSpace(actualConfigFileName))
+                return (false, "Actual config file name is missing (could not validate).");
 
-                    if (!string.Equals(projectName.Name, expectedName, StringComparison.OrdinalIgnoreCase))
-                    {
-                        errors.Add($"Mismatch: JSON projectName = '{projectName.Name}', file name substring = '{expectedName}'.");
-                    }
-                }
-            }
+            if (!ConfigNameRegex.IsValidConfigFileName(actualConfigFileName, out string extractedProjectName))
+                return (false, $"Config file '{actualConfigFileName}' does not follow 'config-{{ProjectName}}.json' naming.");
 
-            return new ValidationResult(errors.Count == 0, errors);
+            if (!string.Equals(projectName.Name, extractedProjectName, StringComparison.OrdinalIgnoreCase))
+                return (false, $"Mismatch: JSON projectName = '{projectName.Name}', file name substring = '{extractedProjectName}'.");
+
+            return (true, string.Empty);
         }
     }
 }

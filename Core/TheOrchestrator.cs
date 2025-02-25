@@ -1,17 +1,22 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
-using Interfaces; // Replace Commons with Interfaces
+using Config.Interfaces;
+using Interfaces;
+using Config;
 
 namespace Core
 {
     public class TheOrchestrator : ITheOrchestrator
     {
-        private readonly IConfigSelector _selector; // From Config
-        private readonly IConfigParser _parser;     // New interface, to be added
-        private readonly IRhinoCommOut _rhino;      // New interface, to be added
+        private readonly IConfigSelUI _selector;
+        private readonly IConfigParser _parser;
+        private readonly IRhinoCommOut _rhino;
 
-        public TheOrchestrator(IConfigSelector selector, IConfigParser parser, IRhinoCommOut rhino)
+        public TheOrchestrator(
+            IConfigSelUI selector,
+            IConfigParser parser,
+            IRhinoCommOut rhino)
         {
             _selector = selector ?? throw new ArgumentNullException(nameof(selector));
             _parser = parser ?? throw new ArgumentNullException(nameof(parser));
@@ -29,8 +34,16 @@ namespace Core
                     _rhino.ShowError("Configuration selection canceled.");
                     return false;
                 }
-                var config = await _parser.ParseConfigAsync(configPath);
-                _rhino.ShowMessage($"Config parsed from {configPath}");
+
+                var configResult = await _parser.ParseConfigAsync(configPath);
+                if (!configResult.IsValid)
+                {
+                    foreach (var msg in configResult.ValidationMessages)
+                        _rhino.ShowError(msg);
+                    return false;
+                }
+
+                _rhino.ShowMessage($"Config parsed and validated from {configResult.FilePath}");
                 return true;
             }
             catch (Exception ex)

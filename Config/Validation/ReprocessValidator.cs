@@ -1,59 +1,35 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.IO;
 using Config.Models;
+using Config.Interfaces;
 
 namespace Config.Validation
 {
-    /// <summary>
-    /// Validates the reprocessing settings configuration.
-    /// 
-    /// In this updated version, errors are collected into a ValidationResult.
-    /// No direct command-line output is performed. This enables all reporting to be handled
-    /// by the centralized validation results pipeline.
-    /// </summary>
-    public class ReprocessValidator : IReprocessValidator
+    public class ReprocessValidator : IValidator
     {
-        // ICommLineOut dependency removed; errors are now added to the ValidationResult only.
-
-        /// <summary>
-        /// Validates the provided reprocessing settings.
-        /// </summary>
-        /// <param name="settings">The reprocessing settings to validate.</param>
-        /// <returns>A ValidationResult indicating whether the settings are valid and containing any error messages.</returns>
-        public ValidationResult ValidateConfig(ReprocessSettings settings)
+        public (bool isValid, string errorMessage) ValidateConfig(
+            ProjectName projectName,
+            DirectorySettings directories,
+            PIDSettings pidSettings,
+            RhinoFileNameSettings rhinoFileNameSettings,
+            ScriptSettings scriptSettings,
+            ReprocessSettings reprocessSettings,
+            TimeOutSettings timeoutSettings)
         {
-            var errors = new List<string>();
+            if (reprocessSettings == null)
+                return (false, "Reprocess settings cannot be null.");
 
-            // Validate mode is not empty.
-            if (string.IsNullOrWhiteSpace(settings.Mode))
-            {
-                errors.Add("Reprocess mode cannot be empty");
-                return new ValidationResult(false, errors);
-            }
+            if (string.IsNullOrWhiteSpace(reprocessSettings.Mode))
+                return (false, "reprocess_settings.mode cannot be empty.");
 
-            // Validate that the mode is one of the allowed values.
-            var validModes = new[] { "ALL", "PASS", "FAIL", "RESUME" };
-            if (!Array.Exists(validModes, mode => mode.Equals(settings.Mode.ToUpperInvariant(), StringComparison.OrdinalIgnoreCase)))
-            {
-                errors.Add($"Invalid reprocess mode: {settings.Mode}. Must be one of: {string.Join(", ", validModes)}");
-            }
+            var validModes = new[] { "all", "selective" };
+            if (!Array.Exists(validModes, m => string.Equals(m, reprocessSettings.Mode, StringComparison.OrdinalIgnoreCase)))
+                return (false, $"reprocess_settings.mode '{reprocessSettings.Mode}' is not supported. Use 'all' or 'selective'.");
 
-            // For non-ALL modes, ensure ReferenceLog is provided and exists.
-            if (!settings.Mode.Equals("ALL", StringComparison.OrdinalIgnoreCase))
-            {
-                if (string.IsNullOrWhiteSpace(settings.ReferenceLog))
-                {
-                    errors.Add("Reference log path required for non-ALL modes");
-                }
-                else if (!File.Exists(settings.ReferenceLog))
-                {
-                    errors.Add($"Reference log not found: {settings.ReferenceLog}");
-                }
-            }
+            if (string.Equals(reprocessSettings.Mode, "selective", StringComparison.OrdinalIgnoreCase) &&
+                string.IsNullOrWhiteSpace(reprocessSettings.ReferenceLog))
+                return (false, "reprocess_settings.reference_log cannot be empty when mode is 'selective'.");
 
-            return new ValidationResult(errors.Count == 0, errors);
+            return (true, string.Empty);
         }
     }
 }
