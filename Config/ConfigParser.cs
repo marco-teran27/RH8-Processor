@@ -8,7 +8,7 @@ using Config.Validation;
 using Config.Interfaces;
 using Commons;
 
-namespace Config
+namespace Config.ConfigJSON
 {
     public class ConfigParser : IConfigParser
     {
@@ -16,11 +16,12 @@ namespace Config
         {
             try
             {
+                // Load entire file into memory (sufficient for now)
                 var jsonString = await File.ReadAllTextAsync(configPath);
                 var config = JsonSerializer.Deserialize<ConfigStructure>(jsonString);
 
                 if (config == null)
-                    return new ConfigValidationResults(false, new[] { "Failed to parse configuration." }, null, configPath);
+                    return new ConfigValidationResults(false, new[] { "Failed to parse configuration." });
 
                 config.ProjectName.ActualConfigFileName = Path.GetFileName(configPath);
 
@@ -39,11 +40,11 @@ namespace Config
             }
             catch (JsonException ex)
             {
-                return new ConfigValidationResults(false, new[] { $"JSON parsing error: {ex.Message}" }, null, configPath);
+                return new ConfigValidationResults(false, new[] { $"JSON parsing error: {ex.Message}" });
             }
             catch (Exception ex)
             {
-                return new ConfigValidationResults(false, new[] { $"Unexpected error: {ex.Message}" }, null, configPath);
+                return new ConfigValidationResults(false, new[] { $"Unexpected error: {ex.Message}" });
             }
         }
     }

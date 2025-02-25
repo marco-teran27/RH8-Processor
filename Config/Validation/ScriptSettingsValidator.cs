@@ -1,8 +1,8 @@
 ﻿using System;
 using System.IO;
 using Config.Models;
-using Commons;
 using Config.Interfaces;
+using Commons;
 
 namespace Config.Validation
 {
