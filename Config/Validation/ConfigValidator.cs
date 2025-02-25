@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using Commons;
 using Config.Models;
+using Commons;
 using Config.Interfaces;
 
 namespace Config.Validation
@@ -23,8 +23,8 @@ namespace Config.Validation
             {
                 var (isValid, errorMessage) = validator.ValidateConfig(
                     config.ProjectName,
-                    config.Directories,      // Fixed from DirectorySettings
-                    config.PidSettings,      // Fixed from PIDSettings
+                    config.Directories,
+                    config.PidSettings,
                     config.RhinoFileNameSettings,
                     config.ScriptSettings,
                     config.ReprocessSettings,

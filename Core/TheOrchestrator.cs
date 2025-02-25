@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 using Config.Interfaces;
 using Interfaces;
 using Config;
-using Commons; // Added for ConfigValidationResults
+using Commons;
 
 namespace Core
 {
@@ -30,21 +30,25 @@ namespace Core
             {
                 _rhino.ShowMessage("Starting BatchProcessor...");
                 configPath ??= _selector.SelectConfigFile();
+                _rhino.ShowMessage($"Config file selected: {configPath}");
                 if (string.IsNullOrEmpty(configPath) || ct.IsCancellationRequested)
                 {
                     _rhino.ShowError("Configuration selection canceled.");
                     return false;
                 }
 
+                _rhino.ShowMessage("Parsing config file...");
                 var configResult = await _parser.ParseConfigAsync(configPath);
+                _rhino.ShowMessage("Config parsing completed.");
+
                 if (!configResult.IsValid)
                 {
-                    foreach (var msg in configResult.Errors) // Changed from ValidationMessages
+                    foreach (var msg in configResult.Errors)
                         _rhino.ShowError(msg);
                     return false;
                 }
 
-                _rhino.ShowMessage($"Config parsed and validated from {configPath}"); // Changed from configResult.FilePath
+                _rhino.ShowMessage($"Config parsed and validated from {configPath}");
                 return true;
             }
             catch (Exception ex)

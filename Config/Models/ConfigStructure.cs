@@ -5,6 +5,7 @@ namespace Config.Models
     public class ConfigStructure
     {
         [JsonPropertyName("projectName")]
+        [JsonConverter(typeof(ProjectNameConverter))]
         public ProjectName ProjectName { get; set; } = new ProjectName();
 
         [JsonPropertyName("directories")]

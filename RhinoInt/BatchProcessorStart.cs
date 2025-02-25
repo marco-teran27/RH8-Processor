@@ -1,10 +1,10 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-using System;
-using System.Threading;
-using Rhino;
+﻿using Rhino;
 using Rhino.Commands;
 using Interfaces;
 using DInjection;
+using Microsoft.Extensions.DependencyInjection;
+using System.Threading;
+using System;
 
 namespace RhinoInt
 {
@@ -28,7 +28,7 @@ namespace RhinoInt
         {
             var services = new ServiceCollection();
             ServiceConfigurator.ConfigureServices(services);
-            services.AddTransient<IRhinoCommOut, RhinoCommOut>(); // Reference the separate class
+            services.AddTransient<IRhinoCommOut, RhinoCommOut>();
             return services.BuildServiceProvider();
         }
 
@@ -36,9 +36,14 @@ namespace RhinoInt
 
         protected override Result RunCommand(RhinoDoc doc, RunMode mode)
         {
+            RhinoApp.WriteLine("Entering RunCommand...");
             try
             {
-                bool success = _orchestrator.RunBatchAsync(null, CancellationToken.None).GetAwaiter().GetResult();
+                // Temporary synchronous call
+                var task = _orchestrator.RunBatchAsync(null, CancellationToken.None);
+                task.Wait(); // Safer than GetAwaiter().GetResult(), still sync but less prone to deadlock
+                bool success = task.Result;
+                RhinoApp.WriteLine("RunBatchAsync completed.");
                 return success ? Result.Success : Result.Failure;
             }
             catch (Exception ex)

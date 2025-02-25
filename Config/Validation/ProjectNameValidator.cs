@@ -1,6 +1,6 @@
 ﻿using System;
-using Commons;
 using Config.Models;
+using Commons;
 using Config.Interfaces;
 
 namespace Config.Validation
