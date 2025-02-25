@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using Config.Models;
 using Commons;
 using Config.Interfaces;
-using System.ComponentModel.DataAnnotations;
 
 namespace Config.Validation
 {
@@ -23,7 +22,7 @@ namespace Config.Validation
 
             foreach (var validator in _validators)
             {
-                var (isValid, errorMessage) = validator.ValidateConfig(
+                var (isValid, messages) = validator.ValidateConfig(
                     config.ProjectName,
                     config.Directories,
                     config.PidSettings,
@@ -33,10 +32,10 @@ namespace Config.Validation
                     config.TimeoutSettings);
 
                 var validatorName = validator.GetType().Name.Replace("Validator", "");
-                validatorResults.Add(new ValidatorResult(validatorName, isValid, isValid ? "Passed" : errorMessage));
+                validatorResults.Add(new ValidatorResult(validatorName, isValid, messages));
 
-                if (!isValid && !string.IsNullOrEmpty(errorMessage))
-                    errorMessages.Add(errorMessage);
+                if (!isValid && messages != null)
+                    errorMessages.AddRange(messages);
             }
 
             return new ConfigValidationResults(

@@ -1,6 +1,6 @@
 ﻿using System.Text.RegularExpressions;
 
-namespace Commons
+namespace Commons.Utils
 {
     public static class ConfigNameRegex
     {

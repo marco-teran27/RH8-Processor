@@ -6,10 +6,6 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
-  <ItemGroup>
-    <Folder Include="Utils\" />
-  </ItemGroup>
-
 	<ItemGroup>
 		<ProjectReference Include="..\Interfaces\Interfaces.csproj" />
 	</ItemGroup>

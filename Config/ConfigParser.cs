@@ -7,7 +7,6 @@ using Config.Models;
 using Config.Validation;
 using Config.Interfaces;
 using Commons;
-using System.ComponentModel.DataAnnotations;
 
 namespace Config
 {
@@ -34,7 +33,7 @@ namespace Config
                 if (config == null)
                     return Task.FromResult(new ConfigValidationResults(
                         false,
-                    new[] { "Failed to parse configuration." },
+                        new[] { "Failed to parse configuration." },
                         new List<ValidatorResult>()));
 
                 config.ProjectName.ActualConfigFileName = Path.GetFileName(configPath);
@@ -42,13 +41,13 @@ namespace Config
 
                 var validators = new List<IValidator>
                 {
-                    new ProjectNameValidator(),
-                    new DirectoryValidator(),
-                    new PIDValidator(),
-                    new ReprocessValidator(),
-                    new RhinoFileNameValidator(),
-                    new ScriptSettingsValidator(),
-                    new TimeOutValidator()
+                    new ProjectNameValidator(),      // 1
+                    new DirectoryValidator(),        // 2
+                    new ScriptSettingsValidator(),   // 3
+                    new RhinoFileNameValidator(),    // 4
+                    new PIDValidator(),              // 5
+                    new TimeOutValidator(),          // 6
+                    new ReprocessValidator()         // 7
                 };
                 var aggregator = new ConfigValidator(validators);
                 Console.WriteLine("Validators initialized, validating config...");

@@ -1,5 +1,5 @@
 using System.Text.Json.Serialization;
-using Commons;
+using Commons.Utils;
 
 namespace Config.Models
 {

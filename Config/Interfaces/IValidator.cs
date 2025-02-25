@@ -1,9 +1,10 @@
-﻿// Config\Interfaces\IValidator.cs
+﻿using System.Collections.Generic;
+
 namespace Config.Interfaces
 {
     public interface IValidator
     {
-        (bool isValid, string errorMessage) ValidateConfig(
+        (bool isValid, IReadOnlyList<string> messages) ValidateConfig(
             Models.ProjectName projectName,
             Models.DirectorySettings directories,
             Models.PIDSettings pidSettings,

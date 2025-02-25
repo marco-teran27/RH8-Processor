@@ -1,4 +1,4 @@
-﻿namespace Commons
+﻿namespace Commons.Utils
 {
     /// <summary>
     /// Defines supported script types for batch processing.

@@ -1,13 +1,14 @@
 ﻿using System;
+using System.Collections.Generic;
 using Config.Models;
-using Commons;
 using Config.Interfaces;
+using Commons.Utils;
 
 namespace Config.Validation
 {
     public class ProjectNameValidator : IValidator
     {
-        public (bool isValid, string errorMessage) ValidateConfig(
+        public (bool isValid, IReadOnlyList<string> messages) ValidateConfig(
             ProjectName projectName,
             DirectorySettings directories,
             PIDSettings pidSettings,
@@ -16,24 +17,21 @@ namespace Config.Validation
             ReprocessSettings reprocessSettings,
             TimeOutSettings timeoutSettings)
         {
-            return Validate(projectName, projectName.ActualConfigFileName);
-        }
+            var messages = new List<string>();
 
-        public static (bool isValid, string errorMessage) Validate(ProjectName projectName, string actualConfigFileName)
-        {
             if (string.IsNullOrWhiteSpace(projectName.Name))
-                return (false, "projectName cannot be empty in the JSON config.");
+                messages.Add("projectName: missing");
+            else if (string.IsNullOrWhiteSpace(projectName.ActualConfigFileName))
+                messages.Add("Actual config file name: missing");
+            else if (!ConfigNameRegex.IsValidConfigFileName(projectName.ActualConfigFileName, out string extractedProjectName))
+                messages.Add($"Config file '{projectName.ActualConfigFileName}': does not follow 'config-{{ProjectName}}.json' naming");
+            else if (!string.Equals(projectName.Name, extractedProjectName, StringComparison.OrdinalIgnoreCase))
+                messages.Add($"Mismatch: JSON projectName = '{projectName.Name}', file name substring = '{extractedProjectName}'");
+            else
+                messages.Add("Passed");
 
-            if (string.IsNullOrWhiteSpace(actualConfigFileName))
-                return (false, "Actual config file name is missing (could not validate).");
-
-            if (!ConfigNameRegex.IsValidConfigFileName(actualConfigFileName, out string extractedProjectName))
-                return (false, $"Config file '{actualConfigFileName}' does not follow 'config-{{ProjectName}}.json' naming.");
-
-            if (!string.Equals(projectName.Name, extractedProjectName, StringComparison.OrdinalIgnoreCase))
-                return (false, $"Mismatch: JSON projectName = '{projectName.Name}', file name substring = '{extractedProjectName}'.");
-
-            return (true, string.Empty);
+            bool allValid = !messages.Any(m => m.Contains("missing") || m.Contains("Mismatch") || m.Contains("does not follow"));
+            return (allValid, messages);
         }
     }
 }

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using Config.Models;
 using Config.Interfaces;
 
@@ -6,7 +7,7 @@ namespace Config.Validation
 {
     public class PIDValidator : IValidator
     {
-        public (bool isValid, string errorMessage) ValidateConfig(
+        public (bool isValid, IReadOnlyList<string> messages) ValidateConfig(
             ProjectName projectName,
             DirectorySettings directories,
             PIDSettings pidSettings,
@@ -16,28 +17,28 @@ namespace Config.Validation
             TimeOutSettings timeoutSettings)
         {
             if (pidSettings == null)
-                return (false, "PID settings cannot be null.");
+                return (false, new List<string> { "PID settings cannot be null." });
 
             bool allValid = true;
-            string messages = "";
+            var messages = new List<string>();
 
             if (string.IsNullOrWhiteSpace(pidSettings.Mode))
-                messages += "pid_settings.mode: missing; ";
+                messages.Add("pid_settings.mode: missing");
             else if (!string.Equals(pidSettings.Mode, "list", StringComparison.OrdinalIgnoreCase) &&
                      !string.Equals(pidSettings.Mode, "all", StringComparison.OrdinalIgnoreCase))
-                messages += $"pid_settings.mode '{pidSettings.Mode}': needs to be 'list' or 'all'; ";
+                messages.Add($"pid_settings.mode '{pidSettings.Mode}': needs to be 'list' or 'all'");
             else
-                messages += "pid_settings.mode: found; ";
+                messages.Add("pid_settings.mode: found");
 
             if (string.Equals(pidSettings.Mode, "all", StringComparison.OrdinalIgnoreCase))
-                messages += "pid_settings.pids: Bypassed by ALL; ";
-            else if (pidSettings.Pids == null || pidSettings.Pids.Count == 0) // Fixed: Count for List<string>
-                messages += "pid_settings.pids: missing; ";
+                messages.Add("pid_settings.pids: Bypassed by ALL");
+            else if (pidSettings.Pids == null || pidSettings.Pids.Count == 0)
+                messages.Add("pid_settings.pids: missing");
             else
-                messages += "pid_settings.pids: found; ";
+                messages.Add("pid_settings.pids: found");
 
-            allValid = !messages.Contains("missing") && !messages.Contains("needs to be");
-            return (allValid, messages.TrimEnd(';'));
+            allValid = !messages.Any(m => m.Contains("missing") || m.Contains("needs to be"));
+            return (allValid, messages);
         }
     }
 }
