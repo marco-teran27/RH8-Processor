@@ -1,5 +1,7 @@
 ﻿using System.Collections.Generic;
 
+/// ***NOTE FOR FUTURE DEV*** we need to consider if csv format should be processed here or downstream by a csv formatter
+
 namespace Commons.Params
 {
     public class RhinoFileStatus
