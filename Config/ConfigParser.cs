@@ -57,10 +57,10 @@ namespace Config
             }
             catch (JsonException ex)
             {
-                Console.WriteLine($"JSON parsing error: {ex.Message}");
+                Console.WriteLine($"JSON parsing error: {ex.Message} at {ex.Path}");
                 return Task.FromResult(new ConfigValidationResults(
                     false,
-                    new[] { $"JSON parsing error: {ex.Message}" },
+                    new[] { $"JSON parsing error: {ex.Message} at {ex.Path}" },
                     new List<ValidatorResult>()));
             }
             catch (Exception ex)

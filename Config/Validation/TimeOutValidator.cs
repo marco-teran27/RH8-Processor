@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using Config.Models;
 using Config.Interfaces;
 using Commons.Params;
 using Commons.Interfaces;
+using Config.Models;
 
 namespace Config.Validation
 {
@@ -22,18 +22,20 @@ namespace Config.Validation
                 return (false, new List<string> { "Timeout settings cannot be null." });
 
             var messages = new List<string>();
+            int adjustedMinutes = timeoutSettings.Minutes;
 
-            if (timeoutSettings.Minutes <= 0)
-                messages.Add("minutes: missing or invalid (must be > 0)");
+            if (adjustedMinutes < 1)
+            {
+                messages.Add($"minutes: adjusted from {adjustedMinutes} to 1 (must be > 0)");
+                adjustedMinutes = 1;
+            }
             else
+            {
                 messages.Add("minutes: found");
+            }
 
-            bool allValid = !messages.Any(m => m.Contains("missing"));
-
-            // Set TimeOutMin regardless of validity to reflect config value
-            TimeOutMin.Instance.SetMinutes(timeoutSettings);
-
-            return (allValid, messages);
+            TimeOutMin.Instance.SetMinutes(new TimeOutSettings { Minutes = adjustedMinutes });
+            return (true, messages); // Always valid post-adjustment
         }
     }
 }

@@ -28,14 +28,24 @@ namespace Commons.Logging
 
                 foreach (var message in result.Messages)
                 {
-                    // Only prefix "Error:" to failing sub-items
-                    bool isError = message.Contains("missing") || message.Contains("invalid") || message.Contains("needs to be");
-                    string formattedMessage = isError ? $"Error: {message}" : message;
+                    // Strip model-specific prefixes
+                    string cleanMessage = message switch
+                    {
+                        var m when m.StartsWith("pid_settings.") => m.Replace("pid_settings.", ""),
+                        var m when m.StartsWith("reprocess_settings.") => m.Replace("reprocess_settings.", ""),
+                        var m when m.StartsWith("rhino_file_name_settings.") => m.Replace("rhino_file_name_settings.", ""),
+                        var m when m.StartsWith("script_settings ") => m.Replace("script_settings ", ""),
+                        var m when m.StartsWith("script_settings.") => m.Replace("script_settings.", ""),
+                        var m when m.StartsWith("timeout_settings.") => m.Replace("timeout_settings.", ""),
+                        _ => message
+                    };
 
+                    // Only prefix "Error:" to failing sub-items via ShowError
+                    bool isError = cleanMessage.Contains("missing") || cleanMessage.Contains("invalid") || cleanMessage.Contains("needs to be");
                     if (result.IsValid || !isError)
-                        rhinoCommOut.ShowMessage(formattedMessage);
+                        rhinoCommOut.ShowMessage(cleanMessage);
                     else
-                        rhinoCommOut.ShowError(formattedMessage);
+                        rhinoCommOut.ShowError(cleanMessage); // ShowError adds "Error:" once
                 }
             }
 
