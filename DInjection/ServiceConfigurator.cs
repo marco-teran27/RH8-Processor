@@ -2,7 +2,10 @@
 using Config;
 using Config.Interfaces;
 using Interfaces;
+using Core;
+using FileDir;
 using Commons.Logging;
+using Commons.Interfaces;
 
 namespace DInjection
 {
@@ -13,7 +16,8 @@ namespace DInjection
             services.AddSingleton<IConfigState, ConfigState>();
             services.AddTransient<IConfigSelUI, ConfigSelUI>();
             services.AddTransient<IConfigParser, ConfigParser>();
-            services.AddTransient<ITheOrchestrator, Core.TheOrchestrator>();
+            services.AddTransient<IFileDirScanner, FileDirScanner>();
+            services.AddTransient<ITheOrchestrator, TheOrchestrator>();
             return services;
         }
     }
