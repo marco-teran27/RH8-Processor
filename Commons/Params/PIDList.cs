@@ -25,11 +25,12 @@ namespace Commons.Params
             if (pidSettings.Mode.Equals("all", System.StringComparison.OrdinalIgnoreCase) &&
                 rhinoSettings.Mode.Equals("all", System.StringComparison.OrdinalIgnoreCase))
             {
-                _uniqueIds.Add("*"); // All files in directory
+                _uniqueIds.Add("*.3dm"); // All files in directory
             }
             else if (pidSettings.Mode.Equals("all", System.StringComparison.OrdinalIgnoreCase))
             {
-                _uniqueIds.AddRange(rhinoSettings.Keywords); // Keywords only
+                foreach (var keyword in rhinoSettings.Keywords)
+                    _uniqueIds.Add(keyword); // Just keywords, no suffix
             }
             else if (rhinoSettings.Mode.Equals("all", System.StringComparison.OrdinalIgnoreCase))
             {
@@ -39,9 +40,9 @@ namespace Commons.Params
                     var match = PatientIDRegex.Pattern.Match(pid);
                     if (match.Success)
                     {
-                        string prefix = match.Groups[1].Value; // e.g., "300000L"
-                        string suffix = match.Groups[2].Value; // e.g., "S12345"
-                        _uniqueIds.Add($"{prefix}-*-{suffix}"); // Wildcard keyword
+                        string prefix = match.Groups[1].Value;
+                        string suffix = match.Groups[2].Value;
+                        _uniqueIds.Add($"{prefix}-*-{suffix}.3dm"); // Wildcard keyword
                     }
                 }
             }
@@ -53,11 +54,11 @@ namespace Commons.Params
                     var match = PatientIDRegex.Pattern.Match(pid);
                     if (match.Success)
                     {
-                        string prefix = match.Groups[1].Value; // e.g., "300000L"
-                        string suffix = match.Groups[2].Value; // e.g., "S12345"
+                        string prefix = match.Groups[1].Value;
+                        string suffix = match.Groups[2].Value;
                         foreach (var keyword in rhinoSettings.Keywords)
                         {
-                            _uniqueIds.Add($"{prefix}-{keyword}-{suffix}");
+                            _uniqueIds.Add($"{prefix}-{keyword}-{suffix}.3dm");
                         }
                     }
                 }
