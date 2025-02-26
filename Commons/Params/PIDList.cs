@@ -3,8 +3,9 @@ using System.Linq;
 using Commons.Interfaces;
 using Commons.Utils;
 using System.Text.RegularExpressions;
+using Commons.Params;
 
-namespace Commons.Params
+namespace Commons.ConfigParams
 {
     public class PIDList
     {
@@ -25,12 +26,11 @@ namespace Commons.Params
             if (pidSettings.Mode.Equals("all", System.StringComparison.OrdinalIgnoreCase) &&
                 rhinoSettings.Mode.Equals("all", System.StringComparison.OrdinalIgnoreCase))
             {
-                _uniqueIds.Add("*.3dm"); // All files in directory
+                _uniqueIds.Add("*"); // All files in directory
             }
             else if (pidSettings.Mode.Equals("all", System.StringComparison.OrdinalIgnoreCase))
             {
-                foreach (var keyword in rhinoSettings.Keywords)
-                    _uniqueIds.Add($"{keyword}-001.3dm"); // Keywords only with dummy suffix
+                _uniqueIds.AddRange(rhinoSettings.Keywords); // Keywords only
             }
             else if (rhinoSettings.Mode.Equals("all", System.StringComparison.OrdinalIgnoreCase))
             {
@@ -42,7 +42,7 @@ namespace Commons.Params
                     {
                         string prefix = match.Groups[1].Value; // e.g., "300000L"
                         string suffix = match.Groups[2].Value; // e.g., "S12345"
-                        _uniqueIds.Add($"{prefix}-*-{suffix}.3dm"); // Wildcard keyword
+                        _uniqueIds.Add($"{prefix}-*-{suffix}"); // Wildcard keyword
                     }
                 }
             }
@@ -58,7 +58,7 @@ namespace Commons.Params
                         string suffix = match.Groups[2].Value; // e.g., "S12345"
                         foreach (var keyword in rhinoSettings.Keywords)
                         {
-                            _uniqueIds.Add($"{prefix}-{keyword}-{suffix}.3dm");
+                            _uniqueIds.Add($"{prefix}-{keyword}-{suffix}");
                         }
                     }
                 }
