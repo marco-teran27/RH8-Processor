@@ -6,6 +6,7 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Commons.Interfaces;
+using Commons.Logging;
 using Commons.Params;
 using Commons.Utils;
 using Interfaces;

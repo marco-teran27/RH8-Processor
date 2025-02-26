@@ -7,6 +7,7 @@ using Config;
 using Commons;
 using Commons.Params;
 using Commons.Interfaces;
+using Commons.Logging;
 
 namespace Core
 {
