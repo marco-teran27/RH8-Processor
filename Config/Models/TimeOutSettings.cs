@@ -1,10 +1,11 @@
 using System.Text.Json.Serialization;
+using Commons.Interfaces;
 
 namespace Config.Models
 {
-    public class TimeOutSettings
+    public class TimeOutSettings : ITimeOutSettings
     {
         [JsonPropertyName("minutes")]
-        public int Minutes { get; set; }
+        public int Minutes { get; set; } = 8;
     }
 }

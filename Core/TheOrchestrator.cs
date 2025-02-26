@@ -5,6 +5,7 @@ using Config.Interfaces;
 using Interfaces;
 using Config;
 using Commons;
+using Commons.Params;
 
 namespace Core
 {
@@ -42,6 +43,27 @@ namespace Core
                 _rhinoCommOut.ShowMessage("Config parsing completed.");
 
                 Commons.Logging.ConfigValLog.LogValidationResults(configResult, _rhinoCommOut);
+
+                // Debug output for Commons.ConfigParams
+                _rhinoCommOut.ShowMessage("Commons.ConfigParams Contents:");
+                _rhinoCommOut.ShowMessage($"BatchDir FileDir: {BatchDir.Instance.FileDir}");
+                _rhinoCommOut.ShowMessage($"BatchDir OutputDir: {BatchDir.Instance.OutputDir}");
+                _rhinoCommOut.ShowMessage($"ScriptPath FullPath: {ScriptPath.Instance.FullPath}");
+                _rhinoCommOut.ShowMessage($"TimeOutMin Minutes: {TimeOutMin.Instance.Minutes}");
+                _rhinoCommOut.ShowMessage($"Reprocess Mode: {Reprocess.Instance.Mode}");
+                _rhinoCommOut.ShowMessage($"Reprocess ReferenceLog: {Reprocess.Instance.ReferenceLog}");
+
+                _rhinoCommOut.ShowMessage("PIDListLog Contents:");
+                foreach (var pidStatus in PIDListLog.Instance.GetPids())
+                {
+                    _rhinoCommOut.ShowMessage(pidStatus.ToString());
+                }
+
+                _rhinoCommOut.ShowMessage("PIDList Contents:");
+                foreach (var id in PIDList.Instance.GetUniqueIds())
+                {
+                    _rhinoCommOut.ShowMessage(id);
+                }
 
                 if (!configResult.IsValid)
                     return false;

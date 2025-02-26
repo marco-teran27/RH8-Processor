@@ -16,17 +16,17 @@ namespace Commons.Params
         public override string ToString() => $"{PID}: {(IsValid ? "valid" : "invalid")}";
     }
 
-    public class PIDListFormat
+    public class PIDListLog
     {
-        private static readonly PIDListFormat _instance = new PIDListFormat();
+        private static readonly PIDListLog _instance = new PIDListLog();
         private List<PIDStatus> _pids;
 
-        private PIDListFormat()
+        private PIDListLog()
         {
             _pids = new List<PIDStatus>();
         }
 
-        public static PIDListFormat Instance => _instance;
+        public static PIDListLog Instance => _instance;
 
         public void SetPids(List<PIDStatus> pids)
         {

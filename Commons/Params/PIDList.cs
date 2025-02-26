@@ -1,6 +1,8 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using Commons.Interfaces;
+using Commons.Utils;
+using System.Text.RegularExpressions;
 
 namespace Commons.Params
 {
@@ -23,25 +25,41 @@ namespace Commons.Params
             if (pidSettings.Mode.Equals("all", System.StringComparison.OrdinalIgnoreCase) &&
                 rhinoSettings.Mode.Equals("all", System.StringComparison.OrdinalIgnoreCase))
             {
-                _uniqueIds.Add("*.3dm");
+                _uniqueIds.Add("*.3dm"); // All files in directory
             }
             else if (pidSettings.Mode.Equals("all", System.StringComparison.OrdinalIgnoreCase))
             {
                 foreach (var keyword in rhinoSettings.Keywords)
-                    _uniqueIds.Add($"{keyword}-001.3dm");
+                    _uniqueIds.Add($"{keyword}-001.3dm"); // Keywords only with dummy suffix
             }
             else if (rhinoSettings.Mode.Equals("all", System.StringComparison.OrdinalIgnoreCase))
             {
-                foreach (var pid in pidSettings.Pids)
-                    _uniqueIds.Add($"{pid}-*.3dm");
+                var validPids = PIDListLog.Instance.GetPids().Where(p => p.IsValid).Select(p => p.PID);
+                foreach (var pid in validPids)
+                {
+                    var match = PatientIDRegex.Pattern.Match(pid);
+                    if (match.Success)
+                    {
+                        string prefix = match.Groups[1].Value; // e.g., "300000L"
+                        string suffix = match.Groups[2].Value; // e.g., "S12345"
+                        _uniqueIds.Add($"{prefix}-*-{suffix}.3dm"); // Wildcard keyword
+                    }
+                }
             }
             else
             {
-                foreach (var pid in pidSettings.Pids)
+                var validPids = PIDListLog.Instance.GetPids().Where(p => p.IsValid).Select(p => p.PID);
+                foreach (var pid in validPids)
                 {
-                    foreach (var keyword in rhinoSettings.Keywords)
+                    var match = PatientIDRegex.Pattern.Match(pid);
+                    if (match.Success)
                     {
-                        _uniqueIds.Add($"{pid}-{keyword}-001.3dm");
+                        string prefix = match.Groups[1].Value; // e.g., "300000L"
+                        string suffix = match.Groups[2].Value; // e.g., "S12345"
+                        foreach (var keyword in rhinoSettings.Keywords)
+                        {
+                            _uniqueIds.Add($"{prefix}-{keyword}-{suffix}.3dm");
+                        }
                     }
                 }
             }

@@ -4,6 +4,7 @@ using Config.Models;
 using Config.Interfaces;
 using Commons.Utils;
 using Commons.Params;
+using Commons.Interfaces;
 using System.Collections;
 using System.Net.NetworkInformation;
 
@@ -13,12 +14,12 @@ namespace Config.Validation
     {
         public (bool isValid, IReadOnlyList<string> messages) ValidateConfig(
             ProjectName projectName,
-            DirectorySettings directories,
-            PIDSettings pidSettings,
-            RhinoFileNameSettings rhinoFileNameSettings,
-            ScriptSettings scriptSettings,
-            ReprocessSettings reprocessSettings,
-            TimeOutSettings timeoutSettings)
+            IDirectorySettings directories,
+            IPIDSettings pidSettings,
+            IRhinoFileNameSettings rhinoFileNameSettings,
+            IScriptSettings scriptSettings,
+            IReprocessSettings reprocessSettings,
+            ITimeOutSettings timeoutSettings)
         {
             if (pidSettings == null)
                 return (false, new List<string> { "PID settings cannot be null." });
@@ -68,7 +69,7 @@ namespace Config.Validation
                 allValid &= allPidsValid;
             }
 
-            PIDListFormat.Instance.SetPids(pidStatuses);
+            PIDListLog.Instance.SetPids(pidStatuses);
             PIDList.Instance.CompileIds(pidSettings, rhinoFileNameSettings);
 
             return (allValid, messages);

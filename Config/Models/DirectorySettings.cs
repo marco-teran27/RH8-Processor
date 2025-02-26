@@ -1,8 +1,9 @@
 using System.Text.Json.Serialization;
+using Commons.Interfaces;
 
 namespace Config.Models
 {
-    public class DirectorySettings
+    public class DirectorySettings : IDirectorySettings
     {
         [JsonPropertyName("file_dir")]
         public string FileDir { get; set; } = string.Empty;

@@ -4,6 +4,8 @@ using System.IO;
 using Config.Models;
 using Config.Interfaces;
 using Commons.Utils;
+using Commons.Params;
+using Commons.Interfaces;
 
 namespace Config.Validation
 {
@@ -11,12 +13,12 @@ namespace Config.Validation
     {
         public (bool isValid, IReadOnlyList<string> messages) ValidateConfig(
             ProjectName projectName,
-            DirectorySettings directories,
-            PIDSettings pidSettings,
-            RhinoFileNameSettings rhinoFileNameSettings,
-            ScriptSettings scriptSettings,
-            ReprocessSettings reprocessSettings,
-            TimeOutSettings timeoutSettings)
+            IDirectorySettings directories,
+            IPIDSettings pidSettings,
+            IRhinoFileNameSettings rhinoFileNameSettings,
+            IScriptSettings scriptSettings,
+            IReprocessSettings reprocessSettings,
+            ITimeOutSettings timeoutSettings)
         {
             if (scriptSettings == null)
                 return (false, new List<string> { "Script settings cannot be null." });
@@ -25,9 +27,9 @@ namespace Config.Validation
             var messages = new List<string>();
 
             if (string.IsNullOrWhiteSpace(scriptSettings.ScriptName))
-                messages.Add("script_settings.script_name: missing");
+                messages.Add("script_name: missing");
             else
-                messages.Add("script_settings.script_name: found");
+                messages.Add("script_name: found");
 
             string? extension = scriptSettings.ScriptType switch
             {
@@ -38,20 +40,21 @@ namespace Config.Validation
             };
 
             if (extension == null)
-                messages.Add("script_settings.script_type: needs to be 'Python', 'Grasshopper', or 'GrasshopperXml'");
+                messages.Add("script_type: needs to be 'Python', 'Grasshopper', or 'GrasshopperXml'");
             else
-                messages.Add("script_settings.script_type: found");
+                messages.Add("script_type: found");
 
             if (extension != null)
             {
                 var scriptPath = Path.Combine(directories.ScriptDir, $"{scriptSettings.ScriptName}{extension}");
                 if (!File.Exists(scriptPath))
-                    messages.Add($"script_settings script file '{scriptPath}': missing");
+                    messages.Add($"script file '{scriptPath}': missing");
                 else
-                    messages.Add($"script_settings script file '{scriptPath}': found");
+                    messages.Add($"script file '{scriptPath}': found");
             }
 
             allValid = !messages.Any(m => m.Contains("missing") || m.Contains("needs to be"));
+            ScriptPath.Instance.SetScriptPath(scriptSettings, directories);
             return (allValid, messages);
         }
     }

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Config.Models;
 using Config.Interfaces;
 using Commons.Utils;
+using Commons.Interfaces;
 
 namespace Config.Validation
 {
@@ -10,12 +11,12 @@ namespace Config.Validation
     {
         public (bool isValid, IReadOnlyList<string> messages) ValidateConfig(
             ProjectName projectName,
-            DirectorySettings directories,
-            PIDSettings pidSettings,
-            RhinoFileNameSettings rhinoFileNameSettings,
-            ScriptSettings scriptSettings,
-            ReprocessSettings reprocessSettings,
-            TimeOutSettings timeoutSettings)
+            IDirectorySettings directories,
+            IPIDSettings pidSettings,
+            IRhinoFileNameSettings rhinoFileNameSettings,
+            IScriptSettings scriptSettings,
+            IReprocessSettings reprocessSettings,
+            ITimeOutSettings timeoutSettings)
         {
             var messages = new List<string>();
 
