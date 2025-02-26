@@ -41,10 +41,10 @@ namespace FileDir
 
                 var subdirs = Directory.GetDirectories(fileDir, "*", SearchOption.TopDirectoryOnly);
                 var matchedFiles = new List<string>();
-                var idStatuses = new Dictionary<string, bool>(); // Track PIDList IDs' match status
+                var idStatuses = new Dictionary<string, bool>();
 
                 foreach (var id in uniqueIds)
-                    idStatuses[id] = false; // Initialize all as unmatched
+                    idStatuses[id] = false;
 
                 foreach (var subdir in subdirs)
                 {
@@ -53,8 +53,6 @@ namespace FileDir
                     var files = Directory.GetFiles(subdir, "*.3dm", SearchOption.TopDirectoryOnly);
                     foreach (var file in files)
                     {
-                        if (ct.IsCancellationRequested) break;
-
                         string fileName = Path.GetFileName(file);
                         var segments = fileName.Split('-').Select(s => s.Replace(".3dm", "")).ToList();
 
@@ -64,7 +62,7 @@ namespace FileDir
                             {
                                 matchedFiles.Add(file);
                                 idStatuses[id] = true;
-                                break; // All files match, no need to check further
+                                break;
                             }
 
                             var idSegments = id.Split('-').Select(s => s.Replace(".3dm", "")).ToList();
@@ -73,6 +71,13 @@ namespace FileDir
                             if (idSegments.Count == 1) // Keyword only (e.g., "damold")
                             {
                                 if (segments.Any(s => s == idSegments[0]))
+                                    isMatched = true;
+                            }
+                            else if (idSegments.Count >= 3 && idSegments[1] == "*") // Wildcard ID (e.g., "300051L-*-R25437")
+                            {
+                                bool prefixMatch = segments.Any(s => Regex.IsMatch(s, $"^{idSegments[0]}"));
+                                bool suffixMatch = segments.Any(s => s == idSegments[2]);
+                                if (prefixMatch && suffixMatch)
                                     isMatched = true;
                             }
                             else if (idSegments.Count >= 3) // Full ID (e.g., "300000L-damold-S12345")
