@@ -3,9 +3,8 @@ using System.Linq;
 using Commons.Interfaces;
 using Commons.Utils;
 using System.Text.RegularExpressions;
-using Commons.Params;
 
-namespace Commons.ConfigParams
+namespace Commons.Params
 {
     public class PIDList
     {
