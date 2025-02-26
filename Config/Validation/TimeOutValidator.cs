@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using Config.Models;
 using Config.Interfaces;
+using Commons.Params;
 using Commons.Interfaces;
 
 namespace Config.Validation
@@ -23,11 +24,15 @@ namespace Config.Validation
             var messages = new List<string>();
 
             if (timeoutSettings.Minutes <= 0)
-                messages.Add("timeout_settings.minutes: missing or invalid (must be > 0)");
+                messages.Add("minutes: missing or invalid (must be > 0)");
             else
-                messages.Add("timeout_settings.minutes: found");
+                messages.Add("minutes: found");
 
             bool allValid = !messages.Any(m => m.Contains("missing"));
+
+            // Set TimeOutMin regardless of validity to reflect config value
+            TimeOutMin.Instance.SetMinutes(timeoutSettings);
+
             return (allValid, messages);
         }
     }
