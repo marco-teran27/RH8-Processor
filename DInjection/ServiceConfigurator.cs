@@ -3,6 +3,7 @@ using Config;
 using Config.Interfaces;
 using Interfaces;
 using Core;
+using Core.Batch;
 using FileDir;
 using Commons.Logging;
 using Commons.Interfaces;
@@ -18,6 +19,7 @@ namespace DInjection
             services.AddTransient<IConfigParser, ConfigParser>();
             services.AddTransient<IFileDirScanner, FileDirScanner>();
             services.AddTransient<ITheOrchestrator, TheOrchestrator>();
+            services.AddTransient<IBatchService, BatchService>();
             return services;
         }
     }

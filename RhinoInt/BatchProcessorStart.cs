@@ -3,6 +3,7 @@ using Rhino.Commands;
 using Interfaces;
 using DInjection;
 using Microsoft.Extensions.DependencyInjection;
+using Core.Batch;
 using System.Threading;
 using System;
 
@@ -29,6 +30,8 @@ namespace RhinoInt
             var services = new ServiceCollection();
             ServiceConfigurator.ConfigureServices(services);
             services.AddTransient<IRhinoCommOut, RhinoCommOut>();
+            services.AddTransient<IRhinoBatchServices, RhinoBatchServices>();
+            services.AddTransient<IRhinoScriptServices, RhinoScriptServices>();
             return services.BuildServiceProvider();
         }
 
