@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace Commons.Logging
+namespace Commons.LogFile
 {
     public class BatchFileStatus
     {

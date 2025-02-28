@@ -1,42 +1,39 @@
 ﻿using System;
-using System.Windows.Forms;
+using System.IO;
+using Commons.Interfaces;
 using Config.Interfaces;
+using Interfaces;
 
 namespace Config
 {
     public class ConfigSelUI : IConfigSelUI
     {
-        private readonly IConfigState _state;
+        private readonly IRhinoCommOut _rhinoCommOut;
 
-        public ConfigSelUI(IConfigState state)
+        public ConfigSelUI(IRhinoCommOut rhinoCommOut)
         {
-            _state = state ?? throw new ArgumentNullException(nameof(state));
+            _rhinoCommOut = rhinoCommOut ?? throw new ArgumentNullException(nameof(rhinoCommOut));
         }
+
+        public IRhinoCommOut RhinoCommOut => _rhinoCommOut;
 
         public string SelectConfigFile()
         {
             try
             {
-                using (var dialog = new OpenFileDialog())
+                _rhinoCommOut.ShowMessage("\nstarting batchprocessor");
+                string configPath = Console.ReadLine(); // Placeholder—replace with actual UI logic
+                if (string.IsNullOrEmpty(configPath) || !File.Exists(configPath))
                 {
-                    dialog.Title = "Select Config JSON File";
-                    dialog.Filter = "JSON Files (*.json)|*.json|All Files (*.*)|*.*";
-                    dialog.InitialDirectory = string.IsNullOrEmpty(_state.LastConfigPath)
-                        ? Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments)
-                        : _state.LastConfigPath;
-
-                    DialogResult result = dialog.ShowDialog();
-                    if (result == DialogResult.OK && !string.IsNullOrWhiteSpace(dialog.FileName))
-                    {
-                        _state.LastConfigPath = Path.GetDirectoryName(dialog.FileName);
-                        return dialog.FileName;
-                    }
+                    _rhinoCommOut.ShowError("CONFIGURATION SELECTION CANCELED.");
                     return null;
                 }
+                _rhinoCommOut.ShowMessage($"\nCONFIG FILE SELECTED: {Path.GetFileName(configPath)}");
+                return configPath;
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error selecting config file: {ex.Message}");
+                _rhinoCommOut.ShowError($"CONFIG SELECTION FAILED: {ex.Message}");
                 return null;
             }
         }

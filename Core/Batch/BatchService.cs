@@ -1,13 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO; // Added for Path
+using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Interfaces;
 using Commons.Params;
 using Commons.Utils;
-using Commons.Logging;
+using Commons.LogFile;
+using Commons.LogComm;
 
 namespace Core.Batch
 {
@@ -34,11 +35,11 @@ namespace Core.Batch
                 var files = RhinoFileNameList.Instance.GetMatchedFiles();
                 if (!files.Any())
                 {
-                    _rhinoCommOut.ShowError("No matched files found in RhinoFileNameList.");
+                    _rhinoCommOut.ShowError("NO MATCHED FILES FOUND IN RHINOFILENAMELIST.");
                     return;
                 }
 
-                _rhinoCommOut.ShowMessage($"Starting batch processing of {files.Count} files...");
+                _rhinoCommOut.ShowMessage($"STARTING BATCH PROCESSING OF {files.Count} FILES...");
                 var processedFiles = new List<string>();
                 int timeoutMinutes = TimeOutMin.Instance.Minutes;
 
@@ -48,11 +49,10 @@ namespace Core.Batch
 
                     try
                     {
-                        /// Updated: Shorten to filename only—uses Path.GetFileName
                         _rhinoCommOut.ShowMessage($"Processing: {Path.GetFileName(file)}");
                         if (!_batchServices.OpenFile(file))
                         {
-                            _rhinoCommOut.ShowError($"Failed to open {Path.GetFileName(file)}. Skipping.");
+                            _rhinoCommOut.ShowError($"FAILED TO OPEN {Path.GetFileName(file)}. SKIPPING.");
                             BatchServiceLog.Instance.AddStatus(file, "FAIL");
                             _batchServices.CloseFile();
                             continue;
@@ -61,7 +61,7 @@ namespace Core.Batch
                         string scriptPath = ScriptPath.Instance.FullPath;
                         if (string.IsNullOrEmpty(scriptPath))
                         {
-                            _rhinoCommOut.ShowError($"Script path invalid. Skipping {Path.GetFileName(file)}.");
+                            _rhinoCommOut.ShowError($"SCRIPT PATH INVALID. SKIPPING {Path.GetFileName(file)}.");
                             BatchServiceLog.Instance.AddStatus(file, "FAIL");
                             _batchServices.CloseFile();
                             continue;
@@ -81,7 +81,7 @@ namespace Core.Batch
 
                         if (!scriptSuccess)
                         {
-                            _rhinoCommOut.ShowError($"Script failed or timed out on {Path.GetFileName(file)}. Skipping.");
+                            _rhinoCommOut.ShowError($"SCRIPT FAILED OR TIMED OUT ON {Path.GetFileName(file)}. SKIPPING.");
                             BatchServiceLog.Instance.AddStatus(file, "FAIL");
                         }
                         else
@@ -94,12 +94,12 @@ namespace Core.Batch
 
                         if (processedFiles.Count % 10 == 0)
                         {
-                            _rhinoCommOut.ShowMessage($"Processed {processedFiles.Count} files\nEstimated completion time: TBD");
+                            _rhinoCommOut.ShowMessage($"PROCESSED {processedFiles.Count} FILES\nESTIMATED COMPLETION TIME: TBD");
                         }
                     }
                     catch (Exception ex)
                     {
-                        _rhinoCommOut.ShowError($"Error processing {Path.GetFileName(file)}: {ex.Message}. Skipping.");
+                        _rhinoCommOut.ShowError($"ERROR PROCESSING {Path.GetFileName(file)}: {ex.Message}. SKIPPING.");
                         BatchServiceLog.Instance.AddStatus(file, "FAIL");
                         _batchServices.CloseFile();
                     }
@@ -107,18 +107,23 @@ namespace Core.Batch
 
                 if (processedFiles.Count % 10 != 0)
                 {
-                    _rhinoCommOut.ShowMessage($"Processed {processedFiles.Count} files\nEstimated completion time: TBD");
+                    _rhinoCommOut.ShowMessage($"PROCESSED {processedFiles.Count} FILES\nESTIMATED COMPLETION TIME: TBD");
                 }
-                _rhinoCommOut.ShowMessage("Batch processing completed.");
+                _rhinoCommOut.ShowMessage("BATCH PROCESSING COMPLETED.");
             }
             catch (Exception ex)
             {
-                _rhinoCommOut.ShowError($"Batch failed: {ex.Message}");
+                _rhinoCommOut.ShowError($"BATCH FAILED: {ex.Message}");
+            }
+            finally
+            {
+                CloseAllFiles();
             }
         }
 
         public void CloseAllFiles()
         {
+            /// Updated: Move completion message to RhinoFileDirValComm
             _batchServices.CloseAllFiles();
         }
     }

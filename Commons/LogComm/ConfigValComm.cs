@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Interfaces;
-using Config; // For ConfigStructure
+using Commons.Params;
 
 namespace Commons.LogComm
 {
@@ -34,11 +34,11 @@ namespace Commons.LogComm
                     if (validatorName == "DIRECTORIES")
                     {
                         if (message.Contains("file_dir"))
-                            cleanMessage = isError ? "file_dir: ERROR NOT FOUND" : $"file_dir: {Path.GetFileName(Commons.Params.BatchDir.Instance.FileDir)}";
+                            cleanMessage = isError ? "file_dir: ERROR NOT FOUND" : $"file_dir: {Path.GetFileName(BatchDir.Instance.FileDir)}";
                         else if (message.Contains("output_dir"))
-                            cleanMessage = isError ? "output_dir: ERROR NOT FOUND" : $"output_dir: {Path.GetFileName(Commons.Params.BatchDir.Instance.OutputDir)}";
+                            cleanMessage = isError ? "output_dir: ERROR NOT FOUND" : $"output_dir: {Path.GetFileName(BatchDir.Instance.OutputDir)}";
                         else if (message.Contains("script_dir"))
-                            cleanMessage = isError ? "script_dir: ERROR NOT FOUND" : $"script_dir: {Path.GetFileName(Commons.Params.ScriptPath.Instance.ScriptDir)}";
+                            cleanMessage = isError ? "script_dir: ERROR NOT FOUND" : $"script_dir: {Path.GetFileName(ScriptPath.Instance.ScriptDir)}";
                     }
                     else if (validatorName == "SCRIPT SETTINGS")
                     {
@@ -51,7 +51,6 @@ namespace Commons.LogComm
                     }
                     else if (validatorName == "RHINO FILE NAME SETTINGS")
                     {
-                        /// Fixed: Use ConfigStructure for Mode and Keywords
                         if (message.Contains("mode"))
                             cleanMessage = isError ? "mode: ERROR NOT FOUND" : $"mode: {results.ConfigStructure.RhinoFileNameSettings.Mode}";
                         else if (message.Contains("keywords"))
@@ -59,7 +58,7 @@ namespace Commons.LogComm
                     }
                     else if (validatorName == "TIMEOUT SETTINGS")
                     {
-                        cleanMessage = isError ? "minutes: ERROR NOT FOUND" : $"minutes: {Commons.Params.TimeOutMin.Instance.Minutes}";
+                        cleanMessage = isError ? "minutes: ERROR NOT FOUND" : $"minutes: {TimeOutMin.Instance.Minutes}";
                     }
                     else if (validatorName == "PID SETTINGS" && message.Contains("pids"))
                     {
@@ -67,19 +66,19 @@ namespace Commons.LogComm
                     }
                     else if (validatorName == "PID SETTINGS")
                     {
-                        /// Fixed: Use ConfigStructure for Mode
                         cleanMessage = isError ? "mode: ERROR NOT FOUND" : $"mode: {results.ConfigStructure.PIDSettings.Mode}";
                     }
                     else if (validatorName == "REPROCESS SETTINGS")
                     {
                         if (message.Contains("mode"))
-                            cleanMessage = isError ? "mode: ERROR NOT FOUND" : $"mode: {Commons.Params.Reprocess.Instance.Mode}";
+                            cleanMessage = isError ? "mode: ERROR NOT FOUND" : $"mode: {Reprocess.Instance.Mode}";
                         else if (message.Contains("reference_log"))
-                            cleanMessage = isError ? "reference_log: ERROR NOT FOUND" : $"reference_log: {(string.IsNullOrEmpty(Commons.Params.Reprocess.Instance.ReferenceLog) ? "Bypassed by ALL" : Commons.Params.Reprocess.Instance.ReferenceLog)}";
+                            cleanMessage = isError ? "reference_log: ERROR NOT FOUND" : $"reference_log: {(string.IsNullOrEmpty(Reprocess.Instance.ReferenceLog) ? "Bypassed by ALL" : Reprocess.Instance.ReferenceLog)}";
                     }
                     else if (validatorName == "PROJECT NAME")
                     {
-                        cleanMessage = isError ? $"ERROR {cleanMessage.Split(':').Last().Trim().ToUpper()}" : cleanMessage.Split(':').Last().Trim();
+                        /// Updated: Fix CS1061—ProjectName is string in IConfigStructure, no .Name
+                        cleanMessage = isError ? $"ERROR {cleanMessage.Split(':').Last().Trim().ToUpper()}" : results.ConfigStructure.ProjectName;
                     }
 
                     rhinoCommOut.ShowMessage(cleanMessage);

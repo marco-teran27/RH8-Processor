@@ -2,7 +2,7 @@
 
 /// ***NOTE FOR FUTURE DEV*** we need to consider if csv format should be processed here or downstream by a csv formatter
 
-namespace Commons.Logging
+namespace Commons.LogFile
 {
     public class PIDStatus
     {

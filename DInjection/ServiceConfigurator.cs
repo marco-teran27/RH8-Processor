@@ -5,7 +5,7 @@ using Interfaces;
 using Core;
 using Core.Batch;
 using FileDir;
-using Commons.Logging;
+using Commons.LogFile;
 using Commons.Interfaces;
 using Commons.LogComm;
 
@@ -15,14 +15,15 @@ namespace DInjection
     {
         public static IServiceCollection ConfigureServices(IServiceCollection services)
         {
-            services.AddSingleton<IConfigState, ConfigState>();
-            services.AddTransient<IConfigSelUI, ConfigSelUI>();
-            services.AddTransient<IConfigParser, ConfigParser>();
             services.AddTransient<IRhinoFileDirScanner, RhinoFileDirScanner>();
-            services.AddTransient<RhinoFileDirValidator>();
             services.AddTransient<RhinoFileDirValComm>();
-            services.AddTransient<ITheOrchestrator, TheOrchestrator>();
-            services.AddTransient<IBatchService, BatchService>();
+            services.AddTransient<ITheOrchestrator, TheOrchestrator>(provider =>
+                new TheOrchestrator(
+                    provider.GetService<IConfigSelUI>(),
+                    provider.GetService<IConfigParser>(),
+                    provider.GetService<RhinoFileDirValComm>(),
+                    provider.GetService<IBatchService>(),
+                    provider.GetService<IRhinoFileDirScanner>()));
             return services;
         }
     }

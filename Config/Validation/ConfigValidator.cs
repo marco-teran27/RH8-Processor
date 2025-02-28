@@ -38,10 +38,12 @@ namespace Config.Validation
                     errorMessages.AddRange(messages);
             }
 
+            /// Updated: Pass config as IConfigStructure
             return new ConfigValidationResults(
                 errorMessages.Count == 0,
                 errorMessages,
-                validatorResults);
+                validatorResults,
+                config);
         }
     }
 }
