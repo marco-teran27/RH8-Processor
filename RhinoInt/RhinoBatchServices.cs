@@ -13,6 +13,7 @@ namespace RhinoInt
             try
             {
                 RhinoApp.RunScript("_NoEcho _SetRedrawOff", false);
+                /// Updated: Fix OpenFile—use filePath directly, not command string
                 _currentDoc = RhinoDoc.Open(filePath, out bool _);
                 if (_currentDoc != null)
                 {
@@ -50,8 +51,7 @@ namespace RhinoInt
         {
             try
             {
-                /// Updated: Fixed syntax—use _-New None with proper spacing for Rhino 8
-                RhinoApp.RunScript("-_New None", false); // Opens blank doc, closes others
+                RhinoApp.RunScript("-_New None", false);
                 RhinoApp.WriteLine("Opened new blank document—processed files cleared.");
             }
             catch (Exception ex)

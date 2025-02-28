@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO; // Added for Path
 using System.Threading;
 using System.Threading.Tasks;
 using Config;
@@ -37,7 +38,8 @@ namespace Core
             {
                 _rhinoCommOut.ShowMessage("Starting BatchProcessor...");
                 configPath ??= _selector.SelectConfigFile();
-                _rhinoCommOut.ShowMessage($"Config file selected: {configPath}");
+                /// Updated: Show only config filename—not full path
+                _rhinoCommOut.ShowMessage($"Config file selected: {Path.GetFileName(configPath)}");
 
                 if (string.IsNullOrEmpty(configPath) || ct.IsCancellationRequested)
                 {
@@ -57,13 +59,8 @@ namespace Core
                     return false;
                 }
 
-                /// Updated: Commented out debug logs—remove for cleaner output
-                //_rhinoCommOut.ShowMessage($"Debug - BatchDir.FileDir: {Commons.Params.BatchDir.Instance.FileDir}");
-                //_rhinoCommOut.ShowMessage($"Debug - BatchDir.OutputDir: {Commons.Params.BatchDir.Instance.OutputDir}");
-                //_rhinoCommOut.ShowMessage($"Debug - ScriptPath.FullPath: {Commons.Params.ScriptPath.Instance.FullPath}");
-
-                /// Updated: Fixed formatting—removed extra RHINO FILE DIR and parsed message
-                _rhinoCommOut.ShowMessage("All validations passed.\nRHINO FILE DIR");
+                /// Updated: Removed duplicate "All validations passed"—ConfigValLog handles it
+                _rhinoCommOut.ShowMessage("RHINO FILE DIR");
                 await _fileDirScanner.ScanAsync(ct);
 
                 var matchedFiles = Commons.Params.RhinoFileNameList.Instance.GetMatchedFiles();

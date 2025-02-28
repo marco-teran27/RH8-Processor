@@ -99,9 +99,11 @@ namespace FileDir
                     }
                 }
 
+                // Above: foreach (var subdir in subdirs), file matching logic
                 RhinoFileNameList.Instance.SetFiles(matchedFiles);
                 RhinoFileNameListLog.Instance.SetFiles(idStatuses.Select(kvp => new RhinoFileStatus(kvp.Key, kvp.Value)));
-                _rhinoCommOut.ShowMessage($"RHINO FILE DIR\nparsed {matchedFiles.Count} of {(uniqueIds.First() == "*.3dm" ? matchedFiles.Count : uniqueIds.Count)} matched");
+                /// Updated: Removed parsed output—let TheOrchestrator handle it
+                // _rhinoCommOut.ShowMessage($"RHINO FILE DIR\nparsed {matchedFiles.Count} of {(uniqueIds.First() == "*.3dm" ? matchedFiles.Count : uniqueIds.Count)} matched");
             }
             catch (Exception ex)
             {

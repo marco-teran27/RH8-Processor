@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-using System.IO; // Added for Path
+using System.IO;
 using System.Linq;
 using Interfaces;
 
@@ -33,18 +33,21 @@ namespace Commons.Logging
 
                     if (validatorName == "DIRECTORIES")
                     {
-                        /// Updated: Reformat directory outputs with dirname
+                        /// Updated: Use ScriptDir instead of FullPath for script_dir
                         if (message.Contains("file_dir"))
                             cleanMessage = $"file_dir: {Path.GetFileName(Commons.Params.BatchDir.Instance.FileDir)}: {message.Split(':').Last().Trim()}";
                         else if (message.Contains("output_dir"))
                             cleanMessage = $"output_dir: {Path.GetFileName(Commons.Params.BatchDir.Instance.OutputDir)}: {message.Split(':').Last().Trim()}";
                         else if (message.Contains("script_dir"))
-                            cleanMessage = $"script_dir: {Path.GetFileName(Commons.Params.ScriptPath.Instance.FullPath)}: {message.Split(':').Last().Trim()}";
+                            cleanMessage = $"script_dir: {Path.GetFileName(Commons.Params.ScriptPath.Instance.ScriptDir)}: {message.Split(':').Last().Trim()}";
                     }
                     else if (validatorName == "SCRIPT SETTINGS" && message.Contains("script file"))
                     {
-                        /// Updated: Skip "script file" message—redundant
                         continue;
+                    }
+                    else if (validatorName == "RHINO FILE NAME SETTINGS")
+                    {
+                        cleanMessage = message.Replace("rhino_file_name_settings.", "");
                     }
 
                     string formattedMessage = isError ? $"Error: {cleanMessage}" : cleanMessage;
