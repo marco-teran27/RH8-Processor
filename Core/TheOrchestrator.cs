@@ -36,40 +36,43 @@ namespace Core
             try
             {
                 _rhinoCommOut.ShowMessage("Starting BatchProcessor...");
-                // If no config path provided, prompt user to select one
                 configPath ??= _selector.SelectConfigFile();
                 _rhinoCommOut.ShowMessage($"Config file selected: {configPath}");
 
-                // Check if selection was canceled or invalid
                 if (string.IsNullOrEmpty(configPath) || ct.IsCancellationRequested)
                 {
                     _rhinoCommOut.ShowError("Configuration selection canceled.");
                     return false;
                 }
 
-                // Parse the config file into ConfigStructure and validate
                 _rhinoCommOut.ShowMessage("Parsing config file...");
                 var configResult = await _parser.ParseConfigAsync(configPath);
                 _rhinoCommOut.ShowMessage("Config parsing completed.");
 
-                // Log validation results (populates Commons.Params)
                 Commons.Logging.ConfigValLog.LogValidationResults(configResult, _rhinoCommOut);
 
-                // Exit if config is invalid
                 if (!configResult.IsValid)
                 {
                     _rhinoCommOut.ShowError("Validation failed. Please address the issues above.");
                     return false;
                 }
 
-                _rhinoCommOut.ShowMessage($"Config parsed and validated from {configPath}");
+                _rhinoCommOut.ShowMessage($"Debug - BatchDir.FileDir: {Commons.Params.BatchDir.Instance.FileDir}");
+                _rhinoCommOut.ShowMessage($"Debug - BatchDir.OutputDir: {Commons.Params.BatchDir.Instance.OutputDir}");
+                _rhinoCommOut.ShowMessage($"Debug - ScriptPath.FullPath: {Commons.Params.ScriptPath.Instance.FullPath}");
 
-                // Pre-parse file directory for matching Rhino files
-                _rhinoCommOut.ShowMessage("Starting file directory pre-parsing...");
+                _rhinoCommOut.ShowMessage($"All validations passed.\nRHINO FILE DIR");
                 await _fileDirScanner.ScanAsync(ct);
 
-                // Run batch processing on matched files
-                _rhinoCommOut.ShowMessage("Starting batch execution...");
+                var matchedFiles = Commons.Params.RhinoFileNameList.Instance.GetMatchedFiles();
+                int expectedCount = Commons.Params.PIDList.Instance.GetUniqueIds().Count;
+                if (matchedFiles.Count == 0)
+                {
+                    _rhinoCommOut.ShowMessage($"0 of {expectedCount} matched\nNo Files for Batch Execute");
+                    return false;
+                }
+
+                _rhinoCommOut.ShowMessage($"{matchedFiles.Count} of {expectedCount} matched\nStarting batch execution");
                 await _batchService.RunBatchAsync(ct);
 
                 _rhinoCommOut.ShowMessage("Batch process completed successfully.");
@@ -79,6 +82,11 @@ namespace Core
             {
                 _rhinoCommOut.ShowError($"Config pipeline failed: {ex.Message}");
                 return false;
+            }
+            finally
+            {
+                /// Updated: Moved RhinoDoc.CloseAllDocuments to RhinoBatchServices—avoids Rhino calls in Core
+                _batchService.CloseAllFiles();
             }
         }
     }

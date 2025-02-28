@@ -26,6 +26,7 @@ namespace Core.Batch
             _scriptServices = scriptServices ?? throw new ArgumentNullException(nameof(scriptServices));
         }
 
+        // Above: Constructor, class declaration
         public async Task RunBatchAsync(CancellationToken ct)
         {
             try
@@ -52,6 +53,7 @@ namespace Core.Batch
                         {
                             _rhinoCommOut.ShowError($"Failed to open {file}. Skipping.");
                             BatchServiceLog.Instance.AddStatus(file, "FAIL");
+                            /// Updated: Ensure CloseFile runs even on open failure—avoids .rhl
                             _batchServices.CloseFile();
                             continue;
                         }
@@ -114,6 +116,15 @@ namespace Core.Batch
             {
                 _rhinoCommOut.ShowError($"Batch failed: {ex.Message}");
             }
+        }
+        // Below: CloseAllFiles method
+        /// <summary>
+        /// Closes all open Rhino files by delegating to RhinoBatchServices.
+        /// Ensures no .rhl artifacts remain after batch completion.
+        /// </summary>
+        public void CloseAllFiles()
+        {
+            _batchServices.CloseAllFiles();
         }
     }
 }
