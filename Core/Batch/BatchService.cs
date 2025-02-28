@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO; // Added for Path
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -26,7 +27,6 @@ namespace Core.Batch
             _scriptServices = scriptServices ?? throw new ArgumentNullException(nameof(scriptServices));
         }
 
-        // Above: Constructor, class declaration
         public async Task RunBatchAsync(CancellationToken ct)
         {
             try
@@ -48,12 +48,12 @@ namespace Core.Batch
 
                     try
                     {
-                        _rhinoCommOut.ShowMessage($"Processing: {file}");
+                        /// Updated: Shorten to filename only—uses Path.GetFileName
+                        _rhinoCommOut.ShowMessage($"Processing: {Path.GetFileName(file)}");
                         if (!_batchServices.OpenFile(file))
                         {
-                            _rhinoCommOut.ShowError($"Failed to open {file}. Skipping.");
+                            _rhinoCommOut.ShowError($"Failed to open {Path.GetFileName(file)}. Skipping.");
                             BatchServiceLog.Instance.AddStatus(file, "FAIL");
-                            /// Updated: Ensure CloseFile runs even on open failure—avoids .rhl
                             _batchServices.CloseFile();
                             continue;
                         }
@@ -61,7 +61,7 @@ namespace Core.Batch
                         string scriptPath = ScriptPath.Instance.FullPath;
                         if (string.IsNullOrEmpty(scriptPath))
                         {
-                            _rhinoCommOut.ShowError($"Script path invalid. Skipping {file}.");
+                            _rhinoCommOut.ShowError($"Script path invalid. Skipping {Path.GetFileName(file)}.");
                             BatchServiceLog.Instance.AddStatus(file, "FAIL");
                             _batchServices.CloseFile();
                             continue;
@@ -81,12 +81,11 @@ namespace Core.Batch
 
                         if (!scriptSuccess)
                         {
-                            _rhinoCommOut.ShowError($"Script failed or timed out on {file}. Skipping.");
+                            _rhinoCommOut.ShowError($"Script failed or timed out on {Path.GetFileName(file)}. Skipping.");
                             BatchServiceLog.Instance.AddStatus(file, "FAIL");
                         }
                         else
                         {
-                            _rhinoCommOut.ShowMessage($"{file}: complete");
                             BatchServiceLog.Instance.AddStatus(file, "PASS");
                         }
 
@@ -100,7 +99,7 @@ namespace Core.Batch
                     }
                     catch (Exception ex)
                     {
-                        _rhinoCommOut.ShowError($"Error processing {file}: {ex.Message}. Skipping.");
+                        _rhinoCommOut.ShowError($"Error processing {Path.GetFileName(file)}: {ex.Message}. Skipping.");
                         BatchServiceLog.Instance.AddStatus(file, "FAIL");
                         _batchServices.CloseFile();
                     }
@@ -117,11 +116,7 @@ namespace Core.Batch
                 _rhinoCommOut.ShowError($"Batch failed: {ex.Message}");
             }
         }
-        // Below: CloseAllFiles method
-        /// <summary>
-        /// Closes all open Rhino files by delegating to RhinoBatchServices.
-        /// Ensures no .rhl artifacts remain after batch completion.
-        /// </summary>
+
         public void CloseAllFiles()
         {
             _batchServices.CloseAllFiles();

@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.IO; // Added for Path
 using System.Linq;
 using Interfaces;
 
@@ -22,30 +23,35 @@ namespace Commons.Logging
                     _ => result.ValidatorName.ToUpper()
                 };
 
-                // Header with "Error:" if invalid
                 string header = result.IsValid ? $"{validatorName}:" : $"Error: {validatorName}:";
                 rhinoCommOut.ShowMessage(header);
 
                 foreach (var message in result.Messages)
                 {
-                    // Strip model-specific prefixes
-                    string cleanMessage = message switch
-                    {
-                        var m when m.StartsWith("pid_settings.") => m.Replace("pid_settings.", ""),
-                        var m when m.StartsWith("reprocess_settings.") => m.Replace("reprocess_settings.", ""),
-                        var m when m.StartsWith("rhino_file_name_settings.") => m.Replace("rhino_file_name_settings.", ""),
-                        var m when m.StartsWith("script_settings ") => m.Replace("script_settings ", ""),
-                        var m when m.StartsWith("script_settings.") => m.Replace("script_settings.", ""),
-                        var m when m.StartsWith("timeout_settings.") => m.Replace("timeout_settings.", ""),
-                        _ => message
-                    };
+                    bool isError = message.Contains("missing") || message.Contains("invalid") || message.Contains("needs to be");
+                    string cleanMessage = message;
 
-                    // Only prefix "Error:" to failing sub-items via ShowError
-                    bool isError = cleanMessage.Contains("missing") || cleanMessage.Contains("invalid") || cleanMessage.Contains("needs to be");
+                    if (validatorName == "DIRECTORIES")
+                    {
+                        /// Updated: Reformat directory outputs with dirname
+                        if (message.Contains("file_dir"))
+                            cleanMessage = $"file_dir: {Path.GetFileName(Commons.Params.BatchDir.Instance.FileDir)}: {message.Split(':').Last().Trim()}";
+                        else if (message.Contains("output_dir"))
+                            cleanMessage = $"output_dir: {Path.GetFileName(Commons.Params.BatchDir.Instance.OutputDir)}: {message.Split(':').Last().Trim()}";
+                        else if (message.Contains("script_dir"))
+                            cleanMessage = $"script_dir: {Path.GetFileName(Commons.Params.ScriptPath.Instance.FullPath)}: {message.Split(':').Last().Trim()}";
+                    }
+                    else if (validatorName == "SCRIPT SETTINGS" && message.Contains("script file"))
+                    {
+                        /// Updated: Skip "script file" message—redundant
+                        continue;
+                    }
+
+                    string formattedMessage = isError ? $"Error: {cleanMessage}" : cleanMessage;
                     if (result.IsValid || !isError)
-                        rhinoCommOut.ShowMessage(cleanMessage);
+                        rhinoCommOut.ShowMessage(formattedMessage);
                     else
-                        rhinoCommOut.ShowError(cleanMessage); // ShowError adds "Error:" once
+                        rhinoCommOut.ShowError(formattedMessage);
                 }
             }
 

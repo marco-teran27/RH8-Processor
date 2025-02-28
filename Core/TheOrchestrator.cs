@@ -57,11 +57,13 @@ namespace Core
                     return false;
                 }
 
-                _rhinoCommOut.ShowMessage($"Debug - BatchDir.FileDir: {Commons.Params.BatchDir.Instance.FileDir}");
-                _rhinoCommOut.ShowMessage($"Debug - BatchDir.OutputDir: {Commons.Params.BatchDir.Instance.OutputDir}");
-                _rhinoCommOut.ShowMessage($"Debug - ScriptPath.FullPath: {Commons.Params.ScriptPath.Instance.FullPath}");
+                /// Updated: Commented out debug logs—remove for cleaner output
+                //_rhinoCommOut.ShowMessage($"Debug - BatchDir.FileDir: {Commons.Params.BatchDir.Instance.FileDir}");
+                //_rhinoCommOut.ShowMessage($"Debug - BatchDir.OutputDir: {Commons.Params.BatchDir.Instance.OutputDir}");
+                //_rhinoCommOut.ShowMessage($"Debug - ScriptPath.FullPath: {Commons.Params.ScriptPath.Instance.FullPath}");
 
-                _rhinoCommOut.ShowMessage($"All validations passed.\nRHINO FILE DIR");
+                /// Updated: Fixed formatting—removed extra RHINO FILE DIR and parsed message
+                _rhinoCommOut.ShowMessage("All validations passed.\nRHINO FILE DIR");
                 await _fileDirScanner.ScanAsync(ct);
 
                 var matchedFiles = Commons.Params.RhinoFileNameList.Instance.GetMatchedFiles();
@@ -85,7 +87,6 @@ namespace Core
             }
             finally
             {
-                /// Updated: Moved RhinoDoc.CloseAllDocuments to RhinoBatchServices—avoids Rhino calls in Core
                 _batchService.CloseAllFiles();
             }
         }

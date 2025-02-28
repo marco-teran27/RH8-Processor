@@ -37,8 +37,8 @@ namespace RhinoInt
                     case "py":
                         PythonScript python = PythonScript.Create();
                         python.ExecuteScript("import scriptcontext; scriptcontext.doc.Strings.SetString('ScriptDone', None)");
-                        /// Changed: Use -RunPythonScript instead of -_RunScript for correct Rhino Python execution
-                        return RhinoApp.RunScript($"-RunPythonScript \"{scriptPath}\"", true);
+                        /// Updated: Add _NoEcho to suppress Python engine output
+                        return RhinoApp.RunScript($"_-NoEcho -RunPythonScript \"{scriptPath}\"", false);
                     case "gh":
                     case "ghx":
                         var docIO = new GH_DocumentIO();
@@ -57,7 +57,6 @@ namespace RhinoInt
                 return false;
             }
         }
-
         /// <summary>
         /// Monitors script completion based on its type (.py or .gh/.ghx).
         /// Uses custom flag for .py, solver state for .gh/.ghx.

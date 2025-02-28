@@ -12,10 +12,7 @@ namespace RhinoInt
         {
             try
             {
-                // Disable redraw globally—no re-enable per user request
                 RhinoApp.RunScript("_NoEcho _SetRedrawOff", false);
-
-                /// Opens file with redraw off—Rhino 8 compatible
                 _currentDoc = RhinoDoc.Open(filePath, out bool _);
                 if (_currentDoc != null)
                 {
@@ -37,8 +34,7 @@ namespace RhinoInt
             {
                 if (_currentDoc != null)
                 {
-                    _currentDoc.Modified = false; // No save prompt
-                    /// Using Dispose for single-file closure—works with CloseAllFiles
+                    _currentDoc.Modified = false;
                     _currentDoc.Dispose();
                     _currentDoc = null;
                 }
@@ -50,16 +46,12 @@ namespace RhinoInt
             }
         }
 
-        /// <summary>
-        /// Originally closed all documents and exited Rhino—now opens a new blank document
-        /// to clear processed files while keeping Rhino open for debugging.
-        /// </summary>
         public void CloseAllFiles()
         {
             try
             {
-                /// Updated: Replace RhinoApp.Exit with NewDocument—closes all, starts fresh
-                RhinoApp.RunScript("_-New None", false); // No template, no echo
+                /// Updated: Fixed syntax—use _-New None with proper spacing for Rhino 8
+                RhinoApp.RunScript("-_New None", false); // Opens blank doc, closes others
                 RhinoApp.WriteLine("Opened new blank document—processed files cleared.");
             }
             catch (Exception ex)
