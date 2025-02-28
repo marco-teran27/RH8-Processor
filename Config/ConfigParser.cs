@@ -3,73 +3,65 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
 using System.Threading.Tasks;
+using Commons;
+using Config.Interfaces;
 using Config.Models;
 using Config.Validation;
-using Config.Interfaces;
-using Commons;
 
 namespace Config
 {
     public class ConfigParser : IConfigParser
     {
-        public Task<ConfigValidationResults> ParseConfigAsync(string configPath)
+        private readonly ConfigValidator _validator;
+
+        public ConfigParser(ConfigValidator validator)
         {
+            _validator = validator ?? throw new ArgumentNullException(nameof(validator));
+        }
+
+        public async Task<ConfigValidationResults> ParseConfigAsync(string configPath)
+        {
+            if (string.IsNullOrEmpty(configPath))
+            {
+                /// Updated: Add default ConfigStructure when configPath is empty
+                return new ConfigValidationResults(false, new List<string> { "Config file path cannot be empty" }, new List<ValidatorResult>(), new ConfigStructure());
+            }
+
+            if (!File.Exists(configPath))
+            {
+                /// Updated: Add default ConfigStructure when file doesn’t exist
+                return new ConfigValidationResults(false, new List<string> { $"Config file does not exist: {configPath}" }, new List<ValidatorResult>(), new ConfigStructure());
+            }
+
             try
             {
-                Console.WriteLine($"Starting ParseConfigAsync with path: {configPath}");
-                Console.WriteLine("Checking file existence...");
-                if (!File.Exists(configPath))
-                    return Task.FromResult(new ConfigValidationResults(
-                        false,
-                        new[] { $"File does not exist: {configPath}" },
-                        new List<ValidatorResult>()));
+                var jsonString = await File.ReadAllTextAsync(configPath);
+                if (string.IsNullOrWhiteSpace(jsonString))
+                {
+                    /// Updated: Add default ConfigStructure when JSON is empty
+                    return new ConfigValidationResults(false, new List<string> { "Config file cannot be empty" }, new List<ValidatorResult>(), new ConfigStructure());
+                }
 
-                Console.WriteLine("Reading config file synchronously...");
-                var jsonString = File.ReadAllText(configPath);
-                Console.WriteLine("Config file read, deserializing...");
-                var config = JsonSerializer.Deserialize<ConfigStructure>(jsonString);
-                Console.WriteLine("Deserialization completed.");
+                var config = JsonSerializer.Deserialize<ConfigStructure>(jsonString, new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                });
 
                 if (config == null)
-                    return Task.FromResult(new ConfigValidationResults(
-                        false,
-                        new[] { "Failed to parse configuration." },
-                        new List<ValidatorResult>()));
-
-                config.ProjectName.ActualConfigFileName = Path.GetFileName(configPath);
-                Console.WriteLine("ActualConfigFileName set, initializing validators...");
-
-                var validators = new List<IValidator>
                 {
-                    new ProjectNameValidator(),      // 1
-                    new DirectoryValidator(),        // 2
-                    new ScriptSettingsValidator(),   // 3
-                    new RhinoFileNameValidator(),    // 4
-                    new PIDValidator(),              // 5
-                    new TimeOutValidator(),          // 6
-                    new ReprocessValidator()         // 7
-                };
-                var aggregator = new ConfigValidator(validators);
-                Console.WriteLine("Validators initialized, validating config...");
-                var result = aggregator.ValidateConfig(config, configPath);
-                Console.WriteLine("Validation completed.");
-                return Task.FromResult(result);
+                    /// Updated: Add default ConfigStructure when deserialization fails
+                    return new ConfigValidationResults(false, new List<string> { "Failed to deserialize config file" }, new List<ValidatorResult>(), new ConfigStructure());
+                }
+
+                return _validator.ValidateConfig(config, configPath);
             }
             catch (JsonException ex)
             {
-                Console.WriteLine($"JSON parsing error: {ex.Message} at {ex.Path}");
-                return Task.FromResult(new ConfigValidationResults(
-                    false,
-                    new[] { $"JSON parsing error: {ex.Message} at {ex.Path}" },
-                    new List<ValidatorResult>()));
+                return new ConfigValidationResults(false, new List<string> { $"Invalid JSON format: {ex.Message}" }, new List<ValidatorResult>(), new ConfigStructure());
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Unexpected error: {ex.Message}");
-                return Task.FromResult(new ConfigValidationResults(
-                    false,
-                    new[] { $"Unexpected error: {ex.Message}" },
-                    new List<ValidatorResult>()));
+                return new ConfigValidationResults(false, new List<string> { $"Error parsing config: {ex.Message}" }, new List<ValidatorResult>(), new ConfigStructure());
             }
         }
     }

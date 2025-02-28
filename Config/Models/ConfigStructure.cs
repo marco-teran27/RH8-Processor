@@ -3,7 +3,7 @@ using Commons.Interfaces;
 
 namespace Config.Models
 {
-    public class ConfigStructure : IConfigStructure // Updated: Implement interface
+    public class ConfigStructure : IConfigStructure
     {
         [JsonPropertyName("projectName")]
         [JsonConverter(typeof(ProjectNameConverter))]
@@ -27,8 +27,8 @@ namespace Config.Models
         [JsonPropertyName("timeout_settings")]
         public TimeOutSettings TimeoutSettings { get; set; } = new TimeOutSettings();
 
-        /// Updated: Explicit interface implementations for IConfigStructure
-        string IConfigStructure.ProjectName => ProjectName.Value; // Assuming ProjectName has Value property
+        /// Updated: Fix CS1061—Use ProjectName.Name instead of Value
+        string IConfigStructure.ProjectName => ProjectName.Name;
         IDirectorySettings IConfigStructure.Directories => Directories;
         IPIDSettings IConfigStructure.PIDSettings => PidSettings;
         IRhinoFileNameSettings IConfigStructure.RhinoFileNameSettings => RhinoFileNameSettings;

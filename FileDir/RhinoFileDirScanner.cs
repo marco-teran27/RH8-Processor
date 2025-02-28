@@ -6,7 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Commons;
 using Commons.Interfaces;
-using Commons.Logging;
+using Commons.LogFile;
 using Commons.Params;
 
 namespace FileDir
