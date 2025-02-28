@@ -2,11 +2,11 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Interfaces;
-using Commons.Params;
+using Config; // For ConfigStructure
 
 namespace Commons.LogComm
 {
-    public static class ConfigValLog
+    public static class ConfigValComm
     {
         public static void LogValidationResults(ConfigValidationResults results, IRhinoCommOut rhinoCommOut)
         {
@@ -33,38 +33,33 @@ namespace Commons.LogComm
 
                     if (validatorName == "DIRECTORIES")
                     {
-                        /// Updated: Fixed error format to "ERROR NOT FOUND"
                         if (message.Contains("file_dir"))
-                            cleanMessage = isError ? "file_dir: ERROR NOT FOUND" : $"file_dir: {Path.GetFileName(BatchDir.Instance.FileDir)}";
+                            cleanMessage = isError ? "file_dir: ERROR NOT FOUND" : $"file_dir: {Path.GetFileName(Commons.Params.BatchDir.Instance.FileDir)}";
                         else if (message.Contains("output_dir"))
-                            cleanMessage = isError ? "output_dir: ERROR NOT FOUND" : $"output_dir: {Path.GetFileName(BatchDir.Instance.OutputDir)}";
+                            cleanMessage = isError ? "output_dir: ERROR NOT FOUND" : $"output_dir: {Path.GetFileName(Commons.Params.BatchDir.Instance.OutputDir)}";
                         else if (message.Contains("script_dir"))
-                            cleanMessage = isError ? "script_dir: ERROR NOT FOUND" : $"script_dir: {Path.GetFileName(ScriptPath.Instance.ScriptDir)}";
+                            cleanMessage = isError ? "script_dir: ERROR NOT FOUND" : $"script_dir: {Path.GetFileName(Commons.Params.ScriptPath.Instance.ScriptDir)}";
                     }
                     else if (validatorName == "SCRIPT SETTINGS")
                     {
                         if (message.Contains("script_name"))
-                            cleanMessage = isError ? "script_name: ERROR NOT FOUND" : $"script_name: {ScriptPath.Instance.FullPath.Split(Path.DirectorySeparatorChar).Last().Replace(".py", "").Replace(".gh", "").Replace(".ghx", "")}";
+                            cleanMessage = isError ? "script_name: ERROR NOT FOUND" : $"script_name: {results.ConfigStructure.ScriptSettings.ScriptName}";
                         else if (message.Contains("script_type"))
-                        {
-                            string scriptType = ScriptPath.Instance.FullPath.EndsWith(".py") ? "Python" : ScriptPath.Instance.FullPath.EndsWith(".gh") ? "Grasshopper" : "GrasshopperXml";
-                            cleanMessage = isError ? "script_type: ERROR NOT FOUND" : $"script_type: {scriptType}";
-                        }
+                            cleanMessage = isError ? "script_type: ERROR NOT FOUND" : $"script_type: {results.ConfigStructure.ScriptSettings.ScriptType}";
                         else if (message.Contains("script file"))
                             continue;
                     }
                     else if (validatorName == "RHINO FILE NAME SETTINGS")
                     {
-                        /// Updated: Use Commons.Params values, fix keywords logic
+                        /// Fixed: Use ConfigStructure for Mode and Keywords
                         if (message.Contains("mode"))
-                            cleanMessage = isError ? "mode: ERROR NOT FOUND" : $"mode: {RhinoFileNameList.Instance.Mode}";
+                            cleanMessage = isError ? "mode: ERROR NOT FOUND" : $"mode: {results.ConfigStructure.RhinoFileNameSettings.Mode}";
                         else if (message.Contains("keywords"))
-                            cleanMessage = isError ? "keywords: ERROR NOT FOUND" : $"keywords: {(RhinoFileNameList.Instance.Mode == "ALL" ? "Bypassed by ALL" : string.Join(",", RhinoFileNameList.Instance.GetKeywords()))}";
+                            cleanMessage = isError ? "keywords: ERROR NOT FOUND" : $"keywords: {(results.ConfigStructure.RhinoFileNameSettings.Mode == "ALL" ? "Bypassed by ALL" : string.Join(",", results.ConfigStructure.RhinoFileNameSettings.Keywords))}";
                     }
                     else if (validatorName == "TIMEOUT SETTINGS")
                     {
-                        /// Updated: Use Commons.Params.Minutes
-                        cleanMessage = isError ? "minutes: ERROR NOT FOUND" : $"minutes: {TimeOutMin.Instance.Minutes}";
+                        cleanMessage = isError ? "minutes: ERROR NOT FOUND" : $"minutes: {Commons.Params.TimeOutMin.Instance.Minutes}";
                     }
                     else if (validatorName == "PID SETTINGS" && message.Contains("pids"))
                     {
@@ -72,15 +67,15 @@ namespace Commons.LogComm
                     }
                     else if (validatorName == "PID SETTINGS")
                     {
-                        cleanMessage = isError ? "mode: ERROR NOT FOUND" : $"mode: {PIDList.Instance.Mode}";
+                        /// Fixed: Use ConfigStructure for Mode
+                        cleanMessage = isError ? "mode: ERROR NOT FOUND" : $"mode: {results.ConfigStructure.PIDSettings.Mode}";
                     }
                     else if (validatorName == "REPROCESS SETTINGS")
                     {
-                        /// Updated: Use Commons.Params values
                         if (message.Contains("mode"))
-                            cleanMessage = isError ? "mode: ERROR NOT FOUND" : $"mode: {Reprocess.Instance.Mode}";
+                            cleanMessage = isError ? "mode: ERROR NOT FOUND" : $"mode: {Commons.Params.Reprocess.Instance.Mode}";
                         else if (message.Contains("reference_log"))
-                            cleanMessage = isError ? "reference_log: ERROR NOT FOUND" : $"reference_log: {(string.IsNullOrEmpty(Reprocess.Instance.ReferenceLog) ? "Bypassed by ALL" : Reprocess.Instance.ReferenceLog)}";
+                            cleanMessage = isError ? "reference_log: ERROR NOT FOUND" : $"reference_log: {(string.IsNullOrEmpty(Commons.Params.Reprocess.Instance.ReferenceLog) ? "Bypassed by ALL" : Commons.Params.Reprocess.Instance.ReferenceLog)}";
                     }
                     else if (validatorName == "PROJECT NAME")
                     {

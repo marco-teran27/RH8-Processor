@@ -13,11 +13,11 @@ using Interfaces;
 
 namespace FileDir
 {
-    public class FileDirScanner : IFileDirScanner
+    public class RhinoFileDirScanner : IRhinoFileDirScanner
     {
         private readonly IRhinoCommOut _rhinoCommOut;
 
-        public FileDirScanner(IRhinoCommOut rhinoCommOut)
+        public RhinoFileDirScanner(IRhinoCommOut rhinoCommOut)
         {
             _rhinoCommOut = rhinoCommOut ?? throw new ArgumentNullException(nameof(rhinoCommOut));
         }

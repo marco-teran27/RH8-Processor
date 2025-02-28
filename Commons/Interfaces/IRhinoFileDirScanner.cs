@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 
 namespace Commons.Interfaces
 {
-    public interface IFileDirScanner
+    public interface IRhinoFileDirScanner
     {
         Task ScanAsync(CancellationToken ct);
     }
