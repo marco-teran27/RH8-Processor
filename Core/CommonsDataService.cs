@@ -33,13 +33,11 @@ namespace Core
             {
                 if (fileList == null || fileList.MatchedFiles == null)
                 {
-                    _rhinoCommOut.ShowError($"DEBUG: UpdateFromFileDir received null or empty fileList at {DateTime.Now}");
+                    _rhinoCommOut.ShowError("UpdateFromFileDir received null or empty fileList");
                     return;
                 }
 
-                _rhinoCommOut.ShowMessage($"DEBUG: Updating RhinoFileNameList at {DateTime.Now} with {fileList.MatchedFiles.Count} matched files: {string.Join(", ", fileList.MatchedFiles.Select(Path.GetFileName))}");
                 RhinoFileNameList.Instance.SetFiles(fileList);
-                _rhinoCommOut.ShowMessage($"DEBUG: RhinoFileNameList updated at {DateTime.Now}. Current matched files: {string.Join(", ", RhinoFileNameList.Instance.GetMatchedFiles().Select(Path.GetFileName))}");
             }
         }
     }

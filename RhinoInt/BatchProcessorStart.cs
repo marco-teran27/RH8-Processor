@@ -27,8 +27,8 @@ namespace RhinoInt
         private static IServiceProvider InitializeServices()
         {
             var services = new ServiceCollection();
-            ServiceConfigurator.ConfigureServices(services); // Non-Rhino services
-            RhinoServiceConfigurator.ConfigureRhinoServices(services); // Rhino-specific services
+            ServiceConfigurator.ConfigureServices(services);
+            RhinoServiceConfigurator.ConfigureRhinoServices(services);
             return services.BuildServiceProvider();
         }
 
@@ -36,17 +36,14 @@ namespace RhinoInt
 
         protected override Result RunCommand(RhinoDoc doc, RunMode mode)
         {
-            RhinoApp.WriteLine($"DEBUG: Entering BatchProcessorStart.RunCommand at {DateTime.Now}");
             try
             {
-                RhinoApp.WriteLine($"DEBUG: Calling RunBatch at {DateTime.Now}");
                 bool success = _orchestrator.RunBatch(null, CancellationToken.None);
-                RhinoApp.WriteLine($"DEBUG: RunBatch completed at {DateTime.Now} with result: {success}");
                 return success ? Result.Success : Result.Failure;
             }
             catch (Exception ex)
             {
-                RhinoApp.WriteLine($"DEBUG: BatchProcessor failed at {DateTime.Now}: {ex.Message}");
+                RhinoApp.WriteLine($"BatchProcessor failed: {ex.Message}");
                 return Result.Failure;
             }
         }

@@ -15,12 +15,12 @@ namespace Core.Batch
     {
         private readonly IRhinoCommOut _rhinoCommOut;
         private readonly IRhinoBatchServices _batchServices;
-        private readonly IRhinoPythonServices _scriptServices; // Added for script execution
+        private readonly IRhinoPythonServices _scriptServices;
 
         public BatchService(
             IRhinoCommOut rhinoCommOut,
             IRhinoBatchServices batchServices,
-            IRhinoPythonServices scriptServices) // Inject RhinoScriptServices
+            IRhinoPythonServices scriptServices)
         {
             _rhinoCommOut = rhinoCommOut ?? throw new ArgumentNullException(nameof(rhinoCommOut));
             _batchServices = batchServices ?? throw new ArgumentNullException(nameof(batchServices));
@@ -29,81 +29,61 @@ namespace Core.Batch
 
         public async Task RunBatchAsync(CancellationToken ct)
         {
-            _rhinoCommOut.ShowMessage($"DEBUG: Starting RunBatchAsync at {DateTime.Now}");
             try
             {
                 var files = RhinoFileNameList.Instance.GetMatchedFiles();
                 if (!files.Any())
                 {
-                    _rhinoCommOut.ShowError($"DEBUG: No matched files found at {DateTime.Now}");
+                    _rhinoCommOut.ShowError("No matched files found");
                     return;
                 }
-
-                _rhinoCommOut.ShowMessage($"DEBUG: Starting batch processing of {files.Count} files at {DateTime.Now}");
 
                 foreach (var file in files)
                 {
                     if (ct.IsCancellationRequested)
                     {
-                        _rhinoCommOut.ShowMessage($"DEBUG: Cancellation requested at {DateTime.Now} for file {Path.GetFileName(file)}");
                         break;
                     }
 
-                    _rhinoCommOut.ShowMessage($"DEBUG: Attempting to process {Path.GetFileName(file)} at {DateTime.Now}");
                     try
                     {
-                        // Use Task.Run to offload to thread pool, with a 30-second timeout
                         bool success = await Task.Run(async () =>
                         {
                             if (!_batchServices.OpenFile(file))
                             {
-                                _rhinoCommOut.ShowError($"DEBUG: Failed to open {Path.GetFileName(file)} at {DateTime.Now}");
+                                _rhinoCommOut.ShowError($"Failed to open {Path.GetFileName(file)}");
                                 return false;
                             }
 
-                            _rhinoCommOut.ShowMessage($"DEBUG: File {Path.GetFileName(file)} opened at {DateTime.Now}");
-
-                            // Ensure script execution on UI thread with timeout
-                            _rhinoCommOut.ShowMessage($"DEBUG: Attempting to run script for {Path.GetFileName(file)} at {DateTime.Now}");
-                            bool scriptSuccess = await Task.Run(() => _scriptServices.RunScript(ct)); // UI thread via RhinoScriptServices
-                            _rhinoCommOut.ShowMessage($"DEBUG: Script execution for {Path.GetFileName(file)} at {DateTime.Now}: {scriptSuccess}");
-
+                            bool scriptSuccess = await Task.Run(() => _scriptServices.RunScript(ct));
                             if (!scriptSuccess)
                             {
-                                _rhinoCommOut.ShowError($"Python script failed to execute for {Path.GetFileName(file)} at {DateTime.Now}");
+                                _rhinoCommOut.ShowError($"Python script failed to execute for {Path.GetFileName(file)}");
                             }
 
                             _batchServices.CloseFile();
-                            return scriptSuccess; // Return script success for overall status
+                            return scriptSuccess;
                         }, ct).TimeoutAfter(TimeSpan.FromSeconds(30));
 
                         BatchServiceLog.Instance.AddStatus(file, success ? "PASS" : "FAIL");
-
-                        int index = files.ToList().FindIndex(f => f == file);
-                        if (index % 10 == 0 || index == files.Count - 1)
-                        {
-                            _rhinoCommOut.ShowMessage($"DEBUG: Processed {index + 1} files at {DateTime.Now}");
-                        }
                     }
                     catch (TimeoutException)
                     {
-                        _rhinoCommOut.ShowError($"DEBUG: TIMEOUT processing {Path.GetFileName(file)} at {DateTime.Now}");
+                        _rhinoCommOut.ShowError($"TIMEOUT processing {Path.GetFileName(file)}");
                         BatchServiceLog.Instance.AddStatus(file, "FAIL");
                         _batchServices.CloseFile();
                     }
                     catch (Exception ex)
                     {
-                        _rhinoCommOut.ShowError($"DEBUG: Error processing {Path.GetFileName(file)} at {DateTime.Now}: {ex.Message}");
+                        _rhinoCommOut.ShowError($"Error processing {Path.GetFileName(file)}: {ex.Message}");
                         BatchServiceLog.Instance.AddStatus(file, "FAIL");
                         _batchServices.CloseFile();
                     }
                 }
-
-                _rhinoCommOut.ShowMessage($"DEBUG: Batch processing completed at {DateTime.Now}");
             }
             catch (Exception ex)
             {
-                _rhinoCommOut.ShowError($"DEBUG: Batch failed at {DateTime.Now}: {ex.Message}");
+                _rhinoCommOut.ShowError($"Batch failed: {ex.Message}");
             }
             finally
             {
@@ -113,12 +93,10 @@ namespace Core.Batch
 
         public void CloseAllFiles()
         {
-            _rhinoCommOut.ShowMessage($"DEBUG: Closing all files at {DateTime.Now}");
             _batchServices.CloseAllFiles();
         }
     }
 
-    // Extension method for timeout
     public static class TaskExtensions
     {
         public static async Task<T> TimeoutAfter<T>(this Task<T> task, TimeSpan timeout)

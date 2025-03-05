@@ -28,15 +28,13 @@ namespace RhinoInt
 
                 RhinoApp.WriteLine($"Starting Python script execution at {DateTime.Now}: {scriptPath}");
 
-                // Initialize Python engine and execute directly
                 PythonScript python = PythonScript.Create();
-                python.ExecuteScript("import scriptcontext; scriptcontext.doc.Strings.SetString('ScriptDone', 'false')"); // Reset flag
+                python.ExecuteScript("import scriptcontext; scriptcontext.doc.Strings.SetString('ScriptDone', 'false')");
                 python.ExecuteFile(scriptPath);
 
                 RhinoApp.WriteLine($"Python script execution completed at {DateTime.Now}");
 
-                // Check completion with delay
-                for (int i = 0; i < 10; i++) // 1-second timeout
+                for (int i = 0; i < 10; i++)
                 {
                     string scriptDone = RhinoDoc.ActiveDoc?.Strings.GetValue("ScriptDone") ?? "false";
                     if (scriptDone == "true")

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Threading;
-using System.Windows.Forms; // For OpenFileDialog
+using System.Windows.Forms;
 using Config.Interfaces;
 using Interfaces;
 
@@ -21,7 +21,6 @@ namespace Config
             string configPath = null;
             Exception dialogException = null;
 
-            // Run OpenFileDialog on STA thread
             Thread staThread = new Thread(() =>
             {
                 try
@@ -33,7 +32,7 @@ namespace Config
                         FilterIndex = 1,
                         RestoreDirectory = true,
                         Multiselect = false,
-                        InitialDirectory = @"C:\", // TODO: Replace with Environment.SpecialFolder.Desktop or persisted state
+                        InitialDirectory = @"C:\",
                         Title = "Select Config File"
                     };
 
@@ -55,9 +54,9 @@ namespace Config
                 }
             });
 
-            staThread.SetApartmentState(ApartmentState.STA); // Ensure STA mode
+            staThread.SetApartmentState(ApartmentState.STA);
             staThread.Start();
-            staThread.Join(); // Wait for dialog to complete
+            staThread.Join();
 
             if (dialogException != null)
                 return null;

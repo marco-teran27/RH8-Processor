@@ -21,36 +21,28 @@ namespace FileDir
 
         public async Task<(IFileNameList Data, IFileNameValResults Val)> ParseFileDirAsync(string fileDir, IReadOnlyList<string> uniqueIds, IConfigDataResults config)
         {
-            _rhinoCommOut.ShowMessage($"DEBUG: Starting ParseFileDirAsync for {fileDir} at {DateTime.Now}");
             try
             {
                 if (string.IsNullOrEmpty(fileDir))
                 {
-                    _rhinoCommOut.ShowMessage($"DEBUG: File dir empty at {DateTime.Now}");
                     return (null, new FileNameValResults(null, fileDir, new List<string> { "file_dir: missing or invalid" }));
                 }
 
                 if (!Directory.Exists(fileDir))
                 {
-                    _rhinoCommOut.ShowMessage($"DEBUG: File dir {fileDir} not found at {DateTime.Now}");
                     return (null, new FileNameValResults(null, fileDir, new List<string> { $"file_dir '{fileDir}': missing or invalid" }));
                 }
 
-                _rhinoCommOut.ShowMessage($"DEBUG: Scanning directories at {DateTime.Now}");
                 var matchedFiles = new List<string>();
                 var subdirs = Directory.GetDirectories(fileDir, "*", SearchOption.TopDirectoryOnly).Concat(new[] { fileDir }).ToList();
-                _rhinoCommOut.ShowMessage($"DEBUG: Found {subdirs.Count} directories at {DateTime.Now}");
 
                 var allFiles = new List<string>();
                 foreach (var subdir in subdirs)
                 {
-                    _rhinoCommOut.ShowMessage($"DEBUG: Scanning {subdir} at {DateTime.Now}");
                     var files = await Task.Run(() => Directory.GetFiles(subdir, "*.3dm").ToList());
                     allFiles.AddRange(files);
-                    _rhinoCommOut.ShowMessage($"DEBUG: Found {files.Count} .3dm files in {subdir} at {DateTime.Now}");
                 }
 
-                _rhinoCommOut.ShowMessage($"DEBUG: Matching {allFiles.Count} files against {uniqueIds.Count} unique IDs at {DateTime.Now}");
                 foreach (var file in allFiles)
                 {
                     string fileName = Path.GetFileName(file);
@@ -78,18 +70,14 @@ namespace FileDir
                 }
 
                 var distinctMatches = matchedFiles.Distinct().ToList();
-                _rhinoCommOut.ShowMessage($"DEBUG: Found {distinctMatches.Count} distinct matches at {DateTime.Now}");
-
                 var data = new FileNameList(distinctMatches.AsReadOnly());
                 var val = new FileNameValResults(data, fileDir);
-                _rhinoCommOut.ShowMessage($"DEBUG: Updating commons data at {DateTime.Now}");
                 _commonsDataService.UpdateFromFileDir(data, val);
-                _rhinoCommOut.ShowMessage($"DEBUG: ParseFileDirAsync completed at {DateTime.Now}");
                 return (data, val);
             }
             catch (Exception ex)
             {
-                _rhinoCommOut.ShowError($"DEBUG: File directory parsing failed at {DateTime.Now}: {ex.Message}");
+                _rhinoCommOut.ShowError($"File directory parsing failed: {ex.Message}");
                 return (null, new FileNameValResults(null, fileDir, new List<string> { $"File directory parsing failed: {ex.Message}" }));
             }
         }
