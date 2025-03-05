@@ -1,67 +1,61 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
 using System.Threading.Tasks;
-using Commons;
-using Config.Interfaces;
 using Config.Models;
+using Config.Interfaces;
 using Config.Validation;
+using Interfaces;
 
 namespace Config
 {
     public class ConfigParser : IConfigParser
     {
-        private readonly ConfigValidator _validator;
+        private readonly ICommonsDataService _commonsDataService;
+        private readonly IRhinoCommOut _rhinoCommOut; // Added for logging
 
-        public ConfigParser(ConfigValidator validator)
+        public ConfigParser(ICommonsDataService commonsDataService, IRhinoCommOut rhinoCommOut)
         {
-            _validator = validator ?? throw new ArgumentNullException(nameof(validator));
+            _commonsDataService = commonsDataService ?? throw new ArgumentNullException(nameof(commonsDataService));
+            _rhinoCommOut = rhinoCommOut ?? throw new ArgumentNullException(nameof(rhinoCommOut));
         }
 
-        public async Task<ConfigValidationResults> ParseConfigAsync(string configPath)
+        public async Task<(IConfigDataResults Data, IConfigValResults Val)> ParseConfigAsync(string configPath)
         {
-            if (string.IsNullOrEmpty(configPath))
-            {
-                /// Updated: Add default ConfigStructure when configPath is empty
-                return new ConfigValidationResults(false, new List<string> { "Config file path cannot be empty" }, new List<ValidatorResult>(), new ConfigStructure());
-            }
-
-            if (!File.Exists(configPath))
-            {
-                /// Updated: Add default ConfigStructure when file doesn’t exist
-                return new ConfigValidationResults(false, new List<string> { $"Config file does not exist: {configPath}" }, new List<ValidatorResult>(), new ConfigStructure());
-            }
-
+            _rhinoCommOut.ShowMessage($"DEBUG: Starting ParseConfigAsync with path {configPath} at {DateTime.Now}");
             try
             {
-                var jsonString = await File.ReadAllTextAsync(configPath);
-                if (string.IsNullOrWhiteSpace(jsonString))
+                if (string.IsNullOrEmpty(configPath))
                 {
-                    /// Updated: Add default ConfigStructure when JSON is empty
-                    return new ConfigValidationResults(false, new List<string> { "Config file cannot be empty" }, new List<ValidatorResult>(), new ConfigStructure());
+                    _rhinoCommOut.ShowMessage($"DEBUG: Config path empty at {DateTime.Now}");
+                    return (null, new ConfigValResults(null, configPath, new List<(string, bool, IReadOnlyList<string>)> { ("ConfigPath", false, new List<string> { "Config file path cannot be empty" }) }));
                 }
 
-                var config = JsonSerializer.Deserialize<ConfigStructure>(jsonString, new JsonSerializerOptions
+                if (!File.Exists(configPath))
+                {
+                    _rhinoCommOut.ShowMessage($"DEBUG: Config file not found at {configPath} at {DateTime.Now}");
+                    return (null, new ConfigValResults(null, configPath, new List<(string, bool, IReadOnlyList<string>)> { ("ConfigPath", false, new List<string> { $"Config file does not exist: {configPath}" }) }));
+                }
+
+                _rhinoCommOut.ShowMessage($"DEBUG: Reading config file at {DateTime.Now}");
+                string jsonString = await File.ReadAllTextAsync(configPath);
+                _rhinoCommOut.ShowMessage($"DEBUG: Deserializing config at {DateTime.Now}");
+                var config = JsonSerializer.Deserialize<ConfigDataResults>(jsonString, new JsonSerializerOptions
                 {
                     PropertyNameCaseInsensitive = true
-                });
+                }) ?? throw new JsonException("Failed to deserialize config file");
 
-                if (config == null)
-                {
-                    /// Updated: Add default ConfigStructure when deserialization fails
-                    return new ConfigValidationResults(false, new List<string> { "Failed to deserialize config file" }, new List<ValidatorResult>(), new ConfigStructure());
-                }
-
-                return _validator.ValidateConfig(config, configPath);
-            }
-            catch (JsonException ex)
-            {
-                return new ConfigValidationResults(false, new List<string> { $"Invalid JSON format: {ex.Message}" }, new List<ValidatorResult>(), new ConfigStructure());
+                _rhinoCommOut.ShowMessage($"DEBUG: Config deserialized, validating at {DateTime.Now}");
+                var valResults = new ConfigValResults(config, configPath);
+                _rhinoCommOut.ShowMessage($"DEBUG: Updating commons data at {DateTime.Now}");
+                _commonsDataService.UpdateFromConfig(config, valResults);
+                _rhinoCommOut.ShowMessage($"DEBUG: ParseConfigAsync completed at {DateTime.Now}");
+                return (config, valResults);
             }
             catch (Exception ex)
             {
-                return new ConfigValidationResults(false, new List<string> { $"Error parsing config: {ex.Message}" }, new List<ValidatorResult>(), new ConfigStructure());
+                _rhinoCommOut.ShowMessage($"DEBUG: ParseConfigAsync failed at {DateTime.Now}: {ex.Message}");
+                return (null, new ConfigValResults(null, configPath, new List<(string, bool, IReadOnlyList<string>)> { ("Parsing", false, new List<string> { ex.Message }) }));
             }
         }
     }

@@ -1,10 +1,10 @@
 ﻿using System.Threading.Tasks;
-using Commons;
+using Interfaces;
 
 namespace Config.Interfaces
 {
     public interface IConfigParser
     {
-        Task<ConfigValidationResults> ParseConfigAsync(string configPath);
+        Task<(IConfigDataResults Data, IConfigValResults Val)> ParseConfigAsync(string configPath); // Async
     }
 }

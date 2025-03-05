@@ -6,7 +6,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using Interfaces;
 using Commons.Params;
-using Commons.Utils;
 using Commons.LogFile;
 using Commons.LogComm;
 
@@ -16,12 +15,12 @@ namespace Core.Batch
     {
         private readonly IRhinoCommOut _rhinoCommOut;
         private readonly IRhinoBatchServices _batchServices;
-        private readonly IRhinoScriptServices _scriptServices;
+        private readonly IRhinoPythonServices _scriptServices; // Added for script execution
 
         public BatchService(
             IRhinoCommOut rhinoCommOut,
             IRhinoBatchServices batchServices,
-            IRhinoScriptServices scriptServices)
+            IRhinoPythonServices scriptServices) // Inject RhinoScriptServices
         {
             _rhinoCommOut = rhinoCommOut ?? throw new ArgumentNullException(nameof(rhinoCommOut));
             _batchServices = batchServices ?? throw new ArgumentNullException(nameof(batchServices));
@@ -30,90 +29,81 @@ namespace Core.Batch
 
         public async Task RunBatchAsync(CancellationToken ct)
         {
+            _rhinoCommOut.ShowMessage($"DEBUG: Starting RunBatchAsync at {DateTime.Now}");
             try
             {
                 var files = RhinoFileNameList.Instance.GetMatchedFiles();
                 if (!files.Any())
                 {
-                    _rhinoCommOut.ShowError("NO MATCHED FILES FOUND IN RHINOFILENAMELIST.");
+                    _rhinoCommOut.ShowError($"DEBUG: No matched files found at {DateTime.Now}");
                     return;
                 }
 
-                _rhinoCommOut.ShowMessage($"STARTING BATCH PROCESSING OF {files.Count} FILES...");
-                var processedFiles = new List<string>();
-                int timeoutMinutes = TimeOutMin.Instance.Minutes;
+                _rhinoCommOut.ShowMessage($"DEBUG: Starting batch processing of {files.Count} files at {DateTime.Now}");
 
                 foreach (var file in files)
                 {
-                    if (ct.IsCancellationRequested) break;
+                    if (ct.IsCancellationRequested)
+                    {
+                        _rhinoCommOut.ShowMessage($"DEBUG: Cancellation requested at {DateTime.Now} for file {Path.GetFileName(file)}");
+                        break;
+                    }
 
+                    _rhinoCommOut.ShowMessage($"DEBUG: Attempting to process {Path.GetFileName(file)} at {DateTime.Now}");
                     try
                     {
-                        _rhinoCommOut.ShowMessage($"Processing: {Path.GetFileName(file)}");
-                        if (!_batchServices.OpenFile(file))
+                        // Use Task.Run to offload to thread pool, with a 30-second timeout
+                        bool success = await Task.Run(async () =>
                         {
-                            _rhinoCommOut.ShowError($"FAILED TO OPEN {Path.GetFileName(file)}. SKIPPING.");
-                            BatchServiceLog.Instance.AddStatus(file, "FAIL");
-                            _batchServices.CloseFile();
-                            continue;
-                        }
-
-                        string scriptPath = ScriptPath.Instance.FullPath;
-                        if (string.IsNullOrEmpty(scriptPath))
-                        {
-                            _rhinoCommOut.ShowError($"SCRIPT PATH INVALID. SKIPPING {Path.GetFileName(file)}.");
-                            BatchServiceLog.Instance.AddStatus(file, "FAIL");
-                            _batchServices.CloseFile();
-                            continue;
-                        }
-
-                        bool scriptSuccess = await TimeOutManager.RunWithTimeoutAsync(
-                            async () =>
+                            if (!_batchServices.OpenFile(file))
                             {
-                                if (!_scriptServices.RunScript(scriptPath))
-                                    throw new Exception("Script execution failed.");
-                                if (!_scriptServices.WaitForScriptCompletion())
-                                    throw new Exception("Script did not complete.");
-                                await Task.CompletedTask;
-                            },
-                            timeoutMinutes,
-                            ct);
+                                _rhinoCommOut.ShowError($"DEBUG: Failed to open {Path.GetFileName(file)} at {DateTime.Now}");
+                                return false;
+                            }
 
-                        if (!scriptSuccess)
-                        {
-                            _rhinoCommOut.ShowError($"SCRIPT FAILED OR TIMED OUT ON {Path.GetFileName(file)}. SKIPPING.");
-                            BatchServiceLog.Instance.AddStatus(file, "FAIL");
-                        }
-                        else
-                        {
-                            BatchServiceLog.Instance.AddStatus(file, "PASS");
-                        }
+                            _rhinoCommOut.ShowMessage($"DEBUG: File {Path.GetFileName(file)} opened at {DateTime.Now}");
 
+                            // Ensure script execution on UI thread with timeout
+                            _rhinoCommOut.ShowMessage($"DEBUG: Attempting to run script for {Path.GetFileName(file)} at {DateTime.Now}");
+                            bool scriptSuccess = await Task.Run(() => _scriptServices.RunScript(ct)); // UI thread via RhinoScriptServices
+                            _rhinoCommOut.ShowMessage($"DEBUG: Script execution for {Path.GetFileName(file)} at {DateTime.Now}: {scriptSuccess}");
+
+                            if (!scriptSuccess)
+                            {
+                                _rhinoCommOut.ShowError($"Python script failed to execute for {Path.GetFileName(file)} at {DateTime.Now}");
+                            }
+
+                            _batchServices.CloseFile();
+                            return scriptSuccess; // Return script success for overall status
+                        }, ct).TimeoutAfter(TimeSpan.FromSeconds(30));
+
+                        BatchServiceLog.Instance.AddStatus(file, success ? "PASS" : "FAIL");
+
+                        int index = files.ToList().FindIndex(f => f == file);
+                        if (index % 10 == 0 || index == files.Count - 1)
+                        {
+                            _rhinoCommOut.ShowMessage($"DEBUG: Processed {index + 1} files at {DateTime.Now}");
+                        }
+                    }
+                    catch (TimeoutException)
+                    {
+                        _rhinoCommOut.ShowError($"DEBUG: TIMEOUT processing {Path.GetFileName(file)} at {DateTime.Now}");
+                        BatchServiceLog.Instance.AddStatus(file, "FAIL");
                         _batchServices.CloseFile();
-                        processedFiles.Add(file);
-
-                        if (processedFiles.Count % 10 == 0)
-                        {
-                            _rhinoCommOut.ShowMessage($"PROCESSED {processedFiles.Count} FILES\nESTIMATED COMPLETION TIME: TBD");
-                        }
                     }
                     catch (Exception ex)
                     {
-                        _rhinoCommOut.ShowError($"ERROR PROCESSING {Path.GetFileName(file)}: {ex.Message}. SKIPPING.");
+                        _rhinoCommOut.ShowError($"DEBUG: Error processing {Path.GetFileName(file)} at {DateTime.Now}: {ex.Message}");
                         BatchServiceLog.Instance.AddStatus(file, "FAIL");
                         _batchServices.CloseFile();
                     }
                 }
 
-                if (processedFiles.Count % 10 != 0)
-                {
-                    _rhinoCommOut.ShowMessage($"PROCESSED {processedFiles.Count} FILES\nESTIMATED COMPLETION TIME: TBD");
-                }
-                _rhinoCommOut.ShowMessage("BATCH PROCESSING COMPLETED.");
+                _rhinoCommOut.ShowMessage($"DEBUG: Batch processing completed at {DateTime.Now}");
             }
             catch (Exception ex)
             {
-                _rhinoCommOut.ShowError($"BATCH FAILED: {ex.Message}");
+                _rhinoCommOut.ShowError($"DEBUG: Batch failed at {DateTime.Now}: {ex.Message}");
             }
             finally
             {
@@ -123,8 +113,25 @@ namespace Core.Batch
 
         public void CloseAllFiles()
         {
-            /// Updated: Move completion message to RhinoFileDirValComm
+            _rhinoCommOut.ShowMessage($"DEBUG: Closing all files at {DateTime.Now}");
             _batchServices.CloseAllFiles();
+        }
+    }
+
+    // Extension method for timeout
+    public static class TaskExtensions
+    {
+        public static async Task<T> TimeoutAfter<T>(this Task<T> task, TimeSpan timeout)
+        {
+            using (var cts = new CancellationTokenSource())
+            {
+                var delayTask = Task.Delay(timeout, cts.Token);
+                var completedTask = await Task.WhenAny(task, delayTask);
+                if (completedTask == delayTask)
+                    throw new TimeoutException("Operation timed out.");
+                cts.Cancel();
+                return await task;
+            }
         }
     }
 }

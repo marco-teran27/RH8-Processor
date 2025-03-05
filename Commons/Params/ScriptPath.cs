@@ -1,40 +1,31 @@
-﻿using System.IO;
-using Commons;
-using Commons.Interfaces;
-using Commons.Utils;
+﻿using Interfaces;
 
 namespace Commons.Params
 {
     public class ScriptPath
     {
         private static readonly ScriptPath _instance = new ScriptPath();
-        private string _fullPath;
-        private string _scriptDir; // Added to store directory only
+        private string _fullPath = string.Empty;
+        private string _scriptDir = string.Empty;
 
-        private ScriptPath()
-        {
-            _fullPath = string.Empty;
-            _scriptDir = string.Empty; // Initialize new field
-        }
+        private ScriptPath() { }
 
         public static ScriptPath Instance => _instance;
 
-        public void SetScriptPath(IScriptSettings scriptSettings, IDirectorySettings directories)
+        public void SetScriptPath(IConfigDataResults config)
         {
-            string extension = scriptSettings.ScriptType switch
+            string extension = config.ScriptType.ToLower() switch
             {
-                ScriptType.Python => ".py",
-                ScriptType.Grasshopper => ".gh",
-                ScriptType.GrasshopperXml => ".ghx",
+                "python" => ".py",
+                "grasshopper" => ".gh",
+                "grasshopperxml" => ".ghx",
                 _ => ""
             };
-            /// Updated: Store scriptDir separately—used for validation output
-            _scriptDir = directories.ScriptDir;
-            _fullPath = Path.Combine(directories.ScriptDir, $"{scriptSettings.ScriptName}{extension}");
+            _scriptDir = config.ScriptDir;
+            _fullPath = System.IO.Path.Combine(_scriptDir, $"{config.ScriptName}{extension}");
         }
 
         public string FullPath => _fullPath;
-        /// Updated: New property to access script directory only
         public string ScriptDir => _scriptDir;
     }
 }

@@ -1,23 +1,21 @@
-﻿namespace Commons.Params
+﻿using Interfaces;
+
+namespace Commons.Params
 {
     public class BatchDir
     {
         private static readonly BatchDir _instance = new BatchDir();
-        private string _fileDir;
-        private string _outputDir;
+        private string _fileDir = string.Empty;
+        private string _outputDir = string.Empty;
 
-        private BatchDir()
-        {
-            _fileDir = string.Empty;
-            _outputDir = string.Empty;
-        }
+        private BatchDir() { }
 
         public static BatchDir Instance => _instance;
 
-        public void SetDirectories(Interfaces.IDirectorySettings directories)
+        public void SetDirectories(IConfigDataResults config)
         {
-            _fileDir = directories.FileDir;
-            _outputDir = directories.OutputDir;
+            _fileDir = config.FileDir;
+            _outputDir = config.OutputDir;
         }
 
         public string FileDir => _fileDir;

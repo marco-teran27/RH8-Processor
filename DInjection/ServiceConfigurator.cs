@@ -5,8 +5,6 @@ using Interfaces;
 using Core;
 using Core.Batch;
 using FileDir;
-using Commons.LogFile;
-using Commons.Interfaces;
 using Commons.LogComm;
 
 namespace DInjection
@@ -15,15 +13,20 @@ namespace DInjection
     {
         public static IServiceCollection ConfigureServices(IServiceCollection services)
         {
-            services.AddTransient<IRhinoFileDirScanner, RhinoFileDirScanner>();
-            services.AddTransient<RhinoFileDirValComm>();
-            services.AddTransient<ITheOrchestrator, TheOrchestrator>(provider =>
-                new TheOrchestrator(
-                    provider.GetService<IConfigSelUI>(),
-                    provider.GetService<IConfigParser>(),
-                    provider.GetService<RhinoFileDirValComm>(),
-                    provider.GetService<IBatchService>(),
-                    provider.GetService<IRhinoFileDirScanner>()));
+            services.AddSingleton<ICommonsDataService, CommonsDataService>();
+            services.AddTransient<IConfigSelUI, ConfigSelUI>();
+            services.AddTransient<IConfigParser>(provider =>
+                new ConfigParser(
+                    provider.GetService<ICommonsDataService>(),
+                    provider.GetService<IRhinoCommOut>()));
+            services.AddTransient<IFileDirParser, FileDirParser>();
+            services.AddTransient<FileNameValComm>();
+            services.AddTransient<ITheOrchestrator, TheOrchestrator>();
+            services.AddTransient<IBatchService>(provider =>
+                new BatchService(
+                    provider.GetService<IRhinoCommOut>(),
+                    provider.GetService<IRhinoBatchServices>(),
+                    provider.GetService<IRhinoPythonServices>()));
             return services;
         }
     }

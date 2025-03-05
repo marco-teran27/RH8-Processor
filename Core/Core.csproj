@@ -9,6 +9,8 @@
 	<ItemGroup>
 		<ProjectReference Include="..\Interfaces\Interfaces.csproj" />
 		<ProjectReference Include="..\Config\Config.csproj" />
+		<ProjectReference Include="..\FileDir\FileDir.csproj" />
+		<ProjectReference Include="..\Commons\Commons.csproj" />
 	</ItemGroup>	
 	
 </Project>

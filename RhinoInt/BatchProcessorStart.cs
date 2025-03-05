@@ -3,9 +3,8 @@ using Rhino.Commands;
 using Interfaces;
 using DInjection;
 using Microsoft.Extensions.DependencyInjection;
-using Core.Batch;
-using System.Threading;
 using System;
+using System.Threading;
 
 namespace RhinoInt
 {
@@ -28,10 +27,8 @@ namespace RhinoInt
         private static IServiceProvider InitializeServices()
         {
             var services = new ServiceCollection();
-            ServiceConfigurator.ConfigureServices(services);
-            services.AddTransient<IRhinoCommOut, RhinoCommOut>();
-            services.AddTransient<IRhinoBatchServices, RhinoBatchServices>();
-            services.AddTransient<IRhinoScriptServices, RhinoScriptServices>();
+            ServiceConfigurator.ConfigureServices(services); // Non-Rhino services
+            RhinoServiceConfigurator.ConfigureRhinoServices(services); // Rhino-specific services
             return services.BuildServiceProvider();
         }
 
@@ -39,18 +36,17 @@ namespace RhinoInt
 
         protected override Result RunCommand(RhinoDoc doc, RunMode mode)
         {
-            RhinoApp.WriteLine("Entering RunCommand...");
+            RhinoApp.WriteLine($"DEBUG: Entering BatchProcessorStart.RunCommand at {DateTime.Now}");
             try
             {
-                var task = _orchestrator.RunBatchAsync(null, CancellationToken.None);
-                task.Wait();
-                bool success = task.Result;
-                RhinoApp.WriteLine("RunBatchAsync completed.");
+                RhinoApp.WriteLine($"DEBUG: Calling RunBatch at {DateTime.Now}");
+                bool success = _orchestrator.RunBatch(null, CancellationToken.None);
+                RhinoApp.WriteLine($"DEBUG: RunBatch completed at {DateTime.Now} with result: {success}");
                 return success ? Result.Success : Result.Failure;
             }
             catch (Exception ex)
             {
-                RhinoApp.WriteLine($"Error in BatchProcessor: {ex.Message}");
+                RhinoApp.WriteLine($"DEBUG: BatchProcessor failed at {DateTime.Now}: {ex.Message}");
                 return Result.Failure;
             }
         }

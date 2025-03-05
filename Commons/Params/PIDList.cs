@@ -1,66 +1,49 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using Commons.Interfaces;
-using Commons.Utils;
-using System.Text.RegularExpressions;
-using Commons.LogFile;
+using Interfaces;
 
 namespace Commons.Params
 {
     public class PIDList
     {
-        private static readonly PIDList _instance = new PIDList();
-        private List<string> _uniqueIds;
+        private static readonly PIDList _instance = new();
+        private readonly List<string> _uniqueIds = new();
 
-        private PIDList()
-        {
-            _uniqueIds = new List<string>();
-        }
+        private PIDList() { }
 
         public static PIDList Instance => _instance;
 
-        public void CompileIds(IPIDSettings pidSettings, IRhinoFileNameSettings rhinoSettings)
+        public void CompileIds(IConfigDataResults config)
         {
             _uniqueIds.Clear();
-
-            if (pidSettings.Mode.Equals("all", System.StringComparison.OrdinalIgnoreCase) &&
-                rhinoSettings.Mode.Equals("all", System.StringComparison.OrdinalIgnoreCase))
+            if (config.PidMode.Equals("all", StringComparison.OrdinalIgnoreCase) &&
+                config.RhinoFileMode.Equals("all", StringComparison.OrdinalIgnoreCase))
             {
-                _uniqueIds.Add("*.3dm"); // All files in directory
+                _uniqueIds.Add(".3dm"); // Case 3: All/All
             }
-            else if (pidSettings.Mode.Equals("all", System.StringComparison.OrdinalIgnoreCase))
+            else if (config.PidMode.Equals("all", StringComparison.OrdinalIgnoreCase))
             {
-                foreach (var keyword in rhinoSettings.Keywords)
-                    _uniqueIds.Add(keyword); // Just keywords, no suffix
+                foreach (var keyword in config.RhinoFileKeywords)
+                    _uniqueIds.Add($"{keyword}.3dm"); // Case 2: List/All (e.g., damold.3dm)
             }
-            else if (rhinoSettings.Mode.Equals("all", System.StringComparison.OrdinalIgnoreCase))
+            else if (config.RhinoFileMode.Equals("all", StringComparison.OrdinalIgnoreCase))
             {
-                var validPids = PIDListLog.Instance.GetPids().Where(p => p.IsValid).Select(p => p.PID);
-                foreach (var pid in validPids)
+                foreach (var pid in config.Pids)
                 {
-                    var match = PatientIDRegex.Pattern.Match(pid);
-                    if (match.Success)
-                    {
-                        string prefix = match.Groups[1].Value;
-                        string suffix = match.Groups[2].Value;
-                        _uniqueIds.Add($"{prefix}-*-{suffix}.3dm"); // Wildcard keyword
-                    }
+                    var parts = pid.Split('-');
+                    if (parts.Length == 2)
+                        _uniqueIds.Add($"{parts[0]}-*-{parts[1]}.3dm"); // Case 4: All/List
                 }
             }
-            else
+            else // Case 1: List/List
             {
-                var validPids = PIDListLog.Instance.GetPids().Where(p => p.IsValid).Select(p => p.PID);
-                foreach (var pid in validPids)
+                foreach (var pid in config.Pids)
                 {
-                    var match = PatientIDRegex.Pattern.Match(pid);
-                    if (match.Success)
+                    var parts = pid.Split('-');
+                    if (parts.Length == 2)
                     {
-                        string prefix = match.Groups[1].Value;
-                        string suffix = match.Groups[2].Value;
-                        foreach (var keyword in rhinoSettings.Keywords)
-                        {
-                            _uniqueIds.Add($"{prefix}-{keyword}-{suffix}.3dm");
-                        }
+                        foreach (var keyword in config.RhinoFileKeywords)
+                            _uniqueIds.Add($"{parts[0]}-{keyword}-{parts[1]}.3dm");
                     }
                 }
             }

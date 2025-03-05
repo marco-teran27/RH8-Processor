@@ -1,10 +1,9 @@
 ﻿using System.Collections.Generic;
 
-namespace Commons.Interfaces
+namespace Interfaces
 {
-    public interface IValidationResult
+    public interface IFileNameValResults
     {
-        string ValidatorName { get; }
         bool IsValid { get; }
         IReadOnlyList<string> Messages { get; }
     }

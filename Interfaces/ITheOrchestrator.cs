@@ -5,6 +5,7 @@ namespace Interfaces
 {
     public interface ITheOrchestrator
     {
-        Task<bool> RunBatchAsync(string? configPath, CancellationToken ct);
+        Task<bool> RunBatchAsync(string? configPath, CancellationToken ct); // Async method
+        bool RunBatch(string? configPath, CancellationToken ct); // Sync method
     }
 }
