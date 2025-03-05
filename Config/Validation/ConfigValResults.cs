@@ -12,12 +12,14 @@ namespace Config.Validation
     {
         private readonly ConfigDataResults _config;
         private readonly string _configPath;
+        private readonly string _rawMinutes; // New field for raw minutes value
         private readonly IReadOnlyList<(string Name, bool IsValid, IReadOnlyList<string> Messages)> _errorResults;
 
-        public ConfigValResults(ConfigDataResults config, string configPath, IReadOnlyList<(string Name, bool IsValid, IReadOnlyList<string> Messages)> errorResults = null)
+        public ConfigValResults(ConfigDataResults config, string configPath, string rawMinutes = null, IReadOnlyList<(string Name, bool IsValid, IReadOnlyList<string> Messages)> errorResults = null)
         {
             _config = config;
             _configPath = configPath;
+            _rawMinutes = rawMinutes;
             _errorResults = errorResults;
         }
 
@@ -38,6 +40,7 @@ namespace Config.Validation
                     ValidateScriptDir(),
                     ValidateScriptName(),
                     ValidateScriptType(),
+                    ValidateScript(),
                     ValidateRhinoFileMode(),
                     ValidateRhinoFileKeywords(),
                     ValidatePidMode(),
@@ -55,46 +58,59 @@ namespace Config.Validation
         {
             var messages = new List<string>();
             if (string.IsNullOrWhiteSpace(_config.ProjectName))
-                messages.Add("projectName: missing");
+            {
+                messages.Add("ERROR not found");
+            }
             else
-                messages.Add("projectName: found");
-            return ("ProjectName", !messages.Contains("missing"), messages);
+            {
+                string fileName = Path.GetFileName(_configPath);
+                if (!ConfigNameRegex.IsValidConfigFileName(fileName, out string extractedName) ||
+                    !string.Equals(_config.ProjectName, extractedName, StringComparison.OrdinalIgnoreCase))
+                {
+                    messages.Add("ERROR not found");
+                }
+                else
+                {
+                    messages.Add(_config.ProjectName);
+                }
+            }
+            return ("ProjectName", messages[0] != "ERROR not found", messages);
         }
 
         private (string Name, bool IsValid, IReadOnlyList<string> Messages) ValidateFileDir()
         {
             var messages = new List<string>();
             if (string.IsNullOrWhiteSpace(_config.Directories.FileDir))
-                messages.Add("file_dir: missing");
+                messages.Add("ERROR not found");
             else if (!Directory.Exists(_config.Directories.FileDir))
-                messages.Add($"file_dir '{_config.Directories.FileDir}': missing");
+                messages.Add("ERROR not found");
             else
-                messages.Add("file_dir: found");
-            return ("FileDir", !messages.Contains("missing"), messages);
+                messages.Add(_config.Directories.FileDir.Split(Path.DirectorySeparatorChar).Last());
+            return ("FileDir", messages[0] != "ERROR not found", messages);
         }
 
         private (string Name, bool IsValid, IReadOnlyList<string> Messages) ValidateOutputDir()
         {
             var messages = new List<string>();
             if (string.IsNullOrWhiteSpace(_config.Directories.OutputDir))
-                messages.Add("output_dir: missing");
+                messages.Add("ERROR not found");
             else if (!Directory.Exists(_config.Directories.OutputDir))
-                messages.Add($"output_dir '{_config.Directories.OutputDir}': missing");
+                messages.Add("ERROR not found");
             else
-                messages.Add("output_dir: found");
-            return ("OutputDir", !messages.Contains("missing"), messages);
+                messages.Add(_config.Directories.OutputDir.Split(Path.DirectorySeparatorChar).Last());
+            return ("OutputDir", messages[0] != "ERROR not found", messages);
         }
 
         private (string Name, bool IsValid, IReadOnlyList<string> Messages) ValidateScriptDir()
         {
             var messages = new List<string>();
             if (string.IsNullOrWhiteSpace(_config.Directories.ScriptDir))
-                messages.Add("script_dir: missing");
+                messages.Add("ERROR not found");
             else if (!Directory.Exists(_config.Directories.ScriptDir))
-                messages.Add($"script_dir '{_config.Directories.ScriptDir}': missing");
+                messages.Add("ERROR not found");
             else
-                messages.Add("script_dir: found");
-            return ("ScriptDir", !messages.Contains("missing"), messages);
+                messages.Add(_config.Directories.ScriptDir.Split(Path.DirectorySeparatorChar).Last());
+            return ("ScriptDir", messages[0] != "ERROR not found", messages);
         }
 
         private (string Name, bool IsValid, IReadOnlyList<string> Messages) ValidateScriptName()
@@ -110,27 +126,53 @@ namespace Config.Validation
         private (string Name, bool IsValid, IReadOnlyList<string> Messages) ValidateScriptType()
         {
             var messages = new List<string>();
-            string extension = _config.ScriptSettings.ScriptType?.ToLower() switch
+            string scriptTypeLower = _config.ScriptSettings.ScriptType?.ToLower().TrimStart('.');
+            string normalizedType = scriptTypeLower switch
             {
-                "python" => ".py",
-                "grasshopper" => ".gh",
-                "grasshopperxml" => ".ghx",
+                "python" => "Python",
+                "py" => "Python",
+                "grasshopper" => "Grasshopper",
+                "gh" => "Grasshopper",
+                "grasshopperxml" => "Grasshopper",
+                "ghx" => "Grasshopper",
                 _ => null
             };
-            if (extension == null)
-                messages.Add("script_type: needs to be 'Python', 'Grasshopper', or 'GrasshopperXml'");
-            else
-                messages.Add("script_type: found");
-
-            if (extension != null)
+            if (normalizedType == null)
             {
-                var scriptPath = Path.Combine(_config.Directories.ScriptDir, $"{_config.ScriptSettings.ScriptName}{extension}");
-                if (!File.Exists(scriptPath))
-                    messages.Add($"script file '{scriptPath}': missing");
-                else
-                    messages.Add($"script file '{scriptPath}': found");
+                messages.Add("ERROR not found");
+                return ("ScriptType", false, messages.AsReadOnly());
             }
-            return ("ScriptType", !messages.Any(m => m.Contains("missing") || m.Contains("needs")), messages);
+
+            messages.Add(normalizedType);
+            return ("ScriptType", true, messages.AsReadOnly());
+        }
+
+        private (string Name, bool IsValid, IReadOnlyList<string> Messages) ValidateScript()
+        {
+            var messages = new List<string>();
+            string scriptTypeLower = _config.ScriptSettings.ScriptType?.ToLower().TrimStart('.');
+            string extension = scriptTypeLower switch
+            {
+                "python" => ".py",
+                "py" => ".py",
+                "grasshopper" => ".gh",
+                "gh" => ".gh",
+                "grasshopperxml" => ".ghx",
+                "ghx" => ".ghx",
+                _ => "" // No extension if type is invalid
+            };
+            var scriptPath = Path.Combine(_config.Directories.ScriptDir, $"{_config.ScriptSettings.ScriptName}{extension}");
+            if (File.Exists(scriptPath))
+            {
+                messages.Add(scriptPath);
+                messages.Add("found");
+            }
+            else
+            {
+                messages.Add(scriptPath);
+                messages.Add("ERROR not found");
+            }
+            return ("Script", File.Exists(scriptPath), messages.AsReadOnly());
         }
 
         private (string Name, bool IsValid, IReadOnlyList<string> Messages) ValidateRhinoFileMode()
@@ -234,24 +276,31 @@ namespace Config.Validation
         private (string Name, bool IsValid, IReadOnlyList<string> Messages) ValidateTimeoutMinutes()
         {
             var messages = new List<string>();
-            if (_config.TimeoutSettings.Minutes <= 0)
-                messages.Add($"timeout_minutes: adjusted from {_config.TimeoutSettings.Minutes} to 1 (must be > 0)");
+            string rawMinutes = _rawMinutes ?? _config.TimeoutSettings.Minutes.ToString();
+
+            if (string.IsNullOrWhiteSpace(rawMinutes) || !double.TryParse(rawMinutes, out double parsedValue))
+            {
+                messages.Add("ERROR not found");
+                return ("TimeoutMinutes", false, messages);
+            }
+
+            int adjustedMinutes = (int)Math.Ceiling(Math.Abs(parsedValue));
+            if (adjustedMinutes != _config.TimeoutSettings.Minutes || parsedValue != _config.TimeoutSettings.Minutes)
+                messages.Add($"timeout_minutes: adjusted from {parsedValue} to {adjustedMinutes}");
             else
-                messages.Add("timeout_minutes: found");
+                messages.Add(adjustedMinutes.ToString());
             return ("TimeoutMinutes", true, messages);
         }
 
         private (string Name, bool IsValid, IReadOnlyList<string> Messages) ValidateConfigFileName()
         {
             var messages = new List<string>();
-            string fileName = Path.GetFileName(_configPath); // Extract filename only
-            if (string.IsNullOrWhiteSpace(_configPath) || !ConfigNameRegex.IsValidConfigFileName(fileName, out string extractedName))
+            string fileName = Path.GetFileName(_configPath);
+            if (string.IsNullOrWhiteSpace(_configPath) || !ConfigNameRegex.IsValidConfigFileName(fileName, out string _))
                 messages.Add($"Config file '{_configPath}': invalid");
-            else if (!string.Equals(_config.ProjectName, extractedName, StringComparison.OrdinalIgnoreCase))
-                messages.Add($"Mismatch: JSON projectName = '{_config.ProjectName}', file name = '{extractedName}'");
             else
                 messages.Add("Config file name valid");
-            return ("ConfigFile", !messages.Any(m => m.Contains("invalid") || m.Contains("Mismatch")), messages);
+            return ("ConfigFile", !messages.Any(m => m.Contains("invalid")), messages);
         }
     }
 }

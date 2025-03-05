@@ -26,26 +26,20 @@ namespace RhinoInt
                     return false;
                 }
 
-                RhinoApp.WriteLine($"Starting Python script execution at {DateTime.Now}: {scriptPath}");
-
                 PythonScript python = PythonScript.Create();
                 python.ExecuteScript("import scriptcontext; scriptcontext.doc.Strings.SetString('ScriptDone', 'false')");
                 python.ExecuteFile(scriptPath);
-
-                RhinoApp.WriteLine($"Python script execution completed at {DateTime.Now}");
 
                 for (int i = 0; i < 10; i++)
                 {
                     string scriptDone = RhinoDoc.ActiveDoc?.Strings.GetValue("ScriptDone") ?? "false";
                     if (scriptDone == "true")
                     {
-                        RhinoApp.WriteLine($"Python script completion check at {DateTime.Now}: ScriptDone = {scriptDone}");
-                        return true;
+                        return true; // Removed explicit "Hello World" output
                     }
                     Thread.Sleep(100);
                 }
 
-                RhinoApp.WriteLine($"Python script completion check at {DateTime.Now}: ScriptDone = false (timeout)");
                 return false;
             }
             catch (Exception ex)

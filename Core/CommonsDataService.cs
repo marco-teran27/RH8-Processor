@@ -24,6 +24,7 @@ namespace Core
                 Reprocess.Instance.SetReprocess(config);
                 ScriptPath.Instance.SetScriptPath(config);
                 TimeOutMin.Instance.SetMinutes(config);
+                ProjectName.Instance.SetName(config); // Already added, kept for consistency
             }
         }
 

@@ -25,7 +25,6 @@ namespace Config
             {
                 try
                 {
-                    _rhinoCommOut.ShowMessage("\nstarting batchprocessor");
                     using OpenFileDialog openFileDialog = new OpenFileDialog()
                     {
                         Filter = "JSON files (*.json)|*.json|All files (*.*)|*.*",
@@ -40,7 +39,7 @@ namespace Config
                     if (result == DialogResult.OK && !string.IsNullOrWhiteSpace(openFileDialog.FileName))
                     {
                         configPath = openFileDialog.FileName;
-                        _rhinoCommOut.ShowMessage($"\nCONFIG FILE SELECTED: {Path.GetFileName(configPath)}");
+                        _rhinoCommOut.ShowMessage($"\nCONFIG FILE SELECTED: {Path.GetFileName(configPath)}\n");
                     }
                     else
                     {

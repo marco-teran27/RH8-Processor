@@ -21,6 +21,7 @@ namespace DInjection
                     provider.GetService<IRhinoCommOut>()));
             services.AddTransient<IFileDirParser, FileDirParser>();
             services.AddTransient<FileNameValComm>();
+            services.AddTransient<ConfigValComm>(); // Registered as transient
             services.AddTransient<ITheOrchestrator, TheOrchestrator>();
             services.AddTransient<IBatchService>(provider =>
                 new BatchService(

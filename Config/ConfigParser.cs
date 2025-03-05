@@ -2,8 +2,8 @@ using System;
 using System.IO;
 using System.Text.Json;
 using System.Threading.Tasks;
-using Config.Models;
 using Config.Interfaces;
+using Config.Models;
 using Config.Validation;
 using Interfaces;
 
@@ -20,33 +20,45 @@ namespace Config
             _rhinoCommOut = rhinoCommOut ?? throw new ArgumentNullException(nameof(rhinoCommOut));
         }
 
-        public async Task<(IConfigDataResults Data, IConfigValResults Val)> ParseConfigAsync(string configPath)
+        public async Task<(IConfigDataResults, IConfigValResults)> ParseConfigAsync(string configPath)
         {
             try
             {
-                if (string.IsNullOrEmpty(configPath))
+                string jsonText = await File.ReadAllTextAsync(configPath);
+                using JsonDocument doc = JsonDocument.Parse(jsonText);
+                JsonElement root = doc.RootElement;
+
+                // Extract raw minutes value and adjust JSON if needed
+                string rawMinutes = null;
+                string adjustedJson = jsonText;
+                if (root.TryGetProperty("timeout_settings", out JsonElement timeoutSettings) &&
+                    timeoutSettings.TryGetProperty("minutes", out JsonElement minutesElement))
                 {
-                    return (null, new ConfigValResults(null, configPath, new List<(string, bool, IReadOnlyList<string>)> { ("ConfigPath", false, new List<string> { "Config file path cannot be empty" }) }));
+                    rawMinutes = minutesElement.ToString();
+                    if (!int.TryParse(rawMinutes, out _))
+                    {
+                        // Replace non-integer minutes with 0 to ensure deserialization succeeds
+                        string original = $"\"minutes\": {minutesElement.GetRawText()}";
+                        string replacement = "\"minutes\": 0";
+                        adjustedJson = jsonText.Replace(original, replacement);
+                    }
                 }
 
-                if (!File.Exists(configPath))
+                var options = new JsonSerializerOptions
                 {
-                    return (null, new ConfigValResults(null, configPath, new List<(string, bool, IReadOnlyList<string>)> { ("ConfigPath", false, new List<string> { $"Config file does not exist: {configPath}" }) }));
-                }
+                    PropertyNameCaseInsensitive = true,
+                    AllowTrailingCommas = true
+                };
 
-                string jsonString = await File.ReadAllTextAsync(configPath);
-                var config = JsonSerializer.Deserialize<ConfigDataResults>(jsonString, new JsonSerializerOptions
-                {
-                    PropertyNameCaseInsensitive = true
-                }) ?? throw new JsonException("Failed to deserialize config file");
+                ConfigDataResults configData = JsonSerializer.Deserialize<ConfigDataResults>(adjustedJson, options);
+                ConfigValResults configVal = new ConfigValResults(configData, configPath, rawMinutes);
 
-                var valResults = new ConfigValResults(config, configPath);
-                _commonsDataService.UpdateFromConfig(config, valResults);
-                return (config, valResults);
+                return (configData, configVal);
             }
             catch (Exception ex)
             {
-                return (null, new ConfigValResults(null, configPath, new List<(string, bool, IReadOnlyList<string>)> { ("Parsing", false, new List<string> { ex.Message }) }));
+                _rhinoCommOut.ShowError($"CONFIG PARSING FAILED: {ex.Message}");
+                return (null, null);
             }
         }
     }
