@@ -13,6 +13,7 @@ namespace RhinoInt
             services.AddTransient<IRhinoBatchServices>(provider =>
                 new RhinoBatchServices(provider.GetService<IRhinoCommOut>()));
             services.AddTransient<IRhinoPythonServices, RhinoPythonServices>(); // No parameters needed
+            services.AddTransient<IRhinoGrasshopperServices, RhinoGrasshopperServices>(); // Added for Grasshopper
             return services;
         }
     }

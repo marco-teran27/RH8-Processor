@@ -21,13 +21,16 @@ namespace DInjection
                     provider.GetService<IRhinoCommOut>()));
             services.AddTransient<IFileDirParser, FileDirParser>();
             services.AddTransient<FileNameValComm>();
-            services.AddTransient<ConfigValComm>(); // Registered as transient
+            services.AddTransient<ConfigValComm>();
             services.AddTransient<ITheOrchestrator, TheOrchestrator>();
             services.AddTransient<IBatchService>(provider =>
                 new BatchService(
                     provider.GetService<IRhinoCommOut>(),
                     provider.GetService<IRhinoBatchServices>(),
-                    provider.GetService<IRhinoPythonServices>()));
+                    provider.GetService<IRhinoPythonServices>(),
+                    provider.GetService<IRhinoGrasshopperServices>()));
+            // Removed direct RhinoInt references
+            // Assume IRhinoPythonServices and IRhinoGrasshopperServices are registered elsewhere
             return services;
         }
     }

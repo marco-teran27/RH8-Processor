@@ -9,6 +9,7 @@ namespace Commons.Params
         private static readonly ScriptPath _instance = new ScriptPath();
         private string _scriptDir = string.Empty;
         private string _fullPath = string.Empty;
+        private string _scriptType = string.Empty; // Added to store ScriptType
 
         private ScriptPath() { }
 
@@ -18,10 +19,13 @@ namespace Commons.Params
 
         public string FullPath => _fullPath;
 
+        public string Type => _scriptType; // Added getter for script type
+
         public void SetScriptPath(IConfigDataResults config)
         {
             _scriptDir = config.ScriptDir;
             string scriptTypeLower = config.ScriptType?.ToLower().TrimStart('.'); // Use ScriptType directly
+            _scriptType = scriptTypeLower; // Store the script type
             string extension = scriptTypeLower switch
             {
                 "python" => ".py",

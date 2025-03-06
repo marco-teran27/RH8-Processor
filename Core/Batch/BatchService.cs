@@ -8,6 +8,7 @@ using Interfaces;
 using Commons.Params;
 using Commons.LogFile;
 using Commons.LogComm;
+using Commons.Utils;
 
 namespace Core.Batch
 {
@@ -15,16 +16,19 @@ namespace Core.Batch
     {
         private readonly IRhinoCommOut _rhinoCommOut;
         private readonly IRhinoBatchServices _batchServices;
-        private readonly IRhinoPythonServices _scriptServices;
+        private readonly IRhinoPythonServices _pythonServices;
+        private readonly IRhinoGrasshopperServices _grasshopperServices;
 
         public BatchService(
             IRhinoCommOut rhinoCommOut,
             IRhinoBatchServices batchServices,
-            IRhinoPythonServices scriptServices)
+            IRhinoPythonServices pythonServices,
+            IRhinoGrasshopperServices grasshopperServices)
         {
             _rhinoCommOut = rhinoCommOut ?? throw new ArgumentNullException(nameof(rhinoCommOut));
             _batchServices = batchServices ?? throw new ArgumentNullException(nameof(batchServices));
-            _scriptServices = scriptServices ?? throw new ArgumentNullException(nameof(scriptServices));
+            _pythonServices = pythonServices ?? throw new ArgumentNullException(nameof(pythonServices));
+            _grasshopperServices = grasshopperServices ?? throw new ArgumentNullException(nameof(grasshopperServices));
         }
 
         public async Task RunBatchAsync(CancellationToken ct)
@@ -38,6 +42,9 @@ namespace Core.Batch
                     return;
                 }
 
+                string scriptType = ScriptPath.Instance.Type?.ToLower();
+                bool isGrasshopper = scriptType == "grasshopper" || scriptType == "gh" || scriptType == "grasshopperxml" || scriptType == "ghx";
+
                 foreach (var file in files)
                 {
                     if (ct.IsCancellationRequested)
@@ -47,7 +54,7 @@ namespace Core.Batch
 
                     try
                     {
-                        bool success = await Task.Run(async () =>
+                        bool success = await Task.Run(() =>
                         {
                             if (!_batchServices.OpenFile(file))
                             {
@@ -55,23 +62,32 @@ namespace Core.Batch
                                 return false;
                             }
 
-                            bool scriptSuccess = await Task.Run(() => _scriptServices.RunScript(ct));
-                            if (!scriptSuccess)
+                            bool scriptResult = false;
+                            bool completedWithinTimeout = TimeOutManager.RunWithTimeout(
+                                () =>
+                                {
+                                    scriptResult = isGrasshopper ? _grasshopperServices.RunScript(ct) : _pythonServices.RunScript(ct);
+                                },
+                                TimeOutMin.Instance.Minutes,
+                                ct);
+
+                            if (!completedWithinTimeout)
                             {
-                                _rhinoCommOut.ShowError($"Python script failed to execute for {Path.GetFileName(file)}");
+                                _rhinoCommOut.ShowError($"{(isGrasshopper ? "Grasshopper" : "Python")} script timed out for {Path.GetFileName(file)}");
+                                _batchServices.CloseFile();
+                                return false;
+                            }
+
+                            if (!scriptResult)
+                            {
+                                _rhinoCommOut.ShowError($"{(isGrasshopper ? "Grasshopper" : "Python")} script failed for {Path.GetFileName(file)}");
                             }
 
                             _batchServices.CloseFile();
-                            return scriptSuccess;
-                        }, ct).TimeoutAfter(TimeSpan.FromSeconds(30));
+                            return scriptResult;
+                        }, ct);
 
                         BatchServiceLog.Instance.AddStatus(file, success ? "PASS" : "FAIL");
-                    }
-                    catch (TimeoutException)
-                    {
-                        _rhinoCommOut.ShowError($"TIMEOUT processing {Path.GetFileName(file)}");
-                        BatchServiceLog.Instance.AddStatus(file, "FAIL");
-                        _batchServices.CloseFile();
                     }
                     catch (Exception ex)
                     {
@@ -94,22 +110,6 @@ namespace Core.Batch
         public void CloseAllFiles()
         {
             _batchServices.CloseAllFiles();
-        }
-    }
-
-    public static class TaskExtensions
-    {
-        public static async Task<T> TimeoutAfter<T>(this Task<T> task, TimeSpan timeout)
-        {
-            using (var cts = new CancellationTokenSource())
-            {
-                var delayTask = Task.Delay(timeout, cts.Token);
-                var completedTask = await Task.WhenAny(task, delayTask);
-                if (completedTask == delayTask)
-                    throw new TimeoutException("Operation timed out.");
-                cts.Cancel();
-                return await task;
-            }
         }
     }
 }
