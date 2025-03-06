@@ -26,8 +26,8 @@ namespace Commons.LogComm
 
             // Debug: Log contents of RhinoFileNameList with filenames only
             var matchedFiles = RhinoFileNameList.Instance.GetMatchedFiles();
-            _rhinoCommOut.ShowMessage($"DEBUG: Matched files count: {matchedFiles.Count}");
-            _rhinoCommOut.ShowMessage($"DEBUG: Matched files: {string.Join(", ", matchedFiles.Select(Path.GetFileName))}");
+            //_rhinoCommOut.ShowMessage($"DEBUG: Matched files count: {matchedFiles.Count}");
+            //_rhinoCommOut.ShowMessage($"DEBUG: Matched files: {string.Join(", ", matchedFiles.Select(Path.GetFileName))}");
 
             foreach (var message in result.Messages)
             {
@@ -40,7 +40,7 @@ namespace Commons.LogComm
 
             if (result.IsValid)
             {
-                _rhinoCommOut.ShowMessage($"{matchedFiles.Count}\n");
+                _rhinoCommOut.ShowMessage($"Processing {matchedFiles.Count}\n");
                 _rhinoCommOut.ShowMessage("STARTING BATCH EXECUTION");
                 return true;
             }

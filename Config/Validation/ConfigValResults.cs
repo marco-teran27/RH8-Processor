@@ -12,7 +12,7 @@ namespace Config.Validation
     {
         private readonly ConfigDataResults _config;
         private readonly string _configPath;
-        private readonly string _rawMinutes; // New field for raw minutes value
+        private readonly string _rawMinutes;
         private readonly IReadOnlyList<(string Name, bool IsValid, IReadOnlyList<string> Messages)> _errorResults;
 
         public ConfigValResults(ConfigDataResults config, string configPath, string rawMinutes = null, IReadOnlyList<(string Name, bool IsValid, IReadOnlyList<string> Messages)> errorResults = null)
@@ -47,8 +47,8 @@ namespace Config.Validation
                     ValidatePids(),
                     ValidateReprocessMode(),
                     ValidateReferenceLog(),
-                    ValidateTimeoutMinutes(),
-                    ValidateConfigFileName()
+                    ValidateTimeoutMinutes()
+                    // Removed ValidateConfigFileName()
                 };
                 return results.AsReadOnly();
             }
@@ -290,17 +290,6 @@ namespace Config.Validation
             else
                 messages.Add(adjustedMinutes.ToString());
             return ("TimeoutMinutes", true, messages);
-        }
-
-        private (string Name, bool IsValid, IReadOnlyList<string> Messages) ValidateConfigFileName()
-        {
-            var messages = new List<string>();
-            string fileName = Path.GetFileName(_configPath);
-            if (string.IsNullOrWhiteSpace(_configPath) || !ConfigNameRegex.IsValidConfigFileName(fileName, out string _))
-                messages.Add($"Config file '{_configPath}': invalid");
-            else
-                messages.Add("Config file name valid");
-            return ("ConfigFile", !messages.Any(m => m.Contains("invalid")), messages);
         }
     }
 }

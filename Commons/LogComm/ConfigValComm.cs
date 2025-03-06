@@ -77,7 +77,7 @@ namespace Commons.LogComm
                 }
             }
 
-            _rhinoCommOut.ShowMessage($"\nALL VALIDATIONS PASSED: {results.IsValid}");
+            _rhinoCommOut.ShowMessage($"\nAll Validations Passed: {results.IsValid}");
         }
     }
 }
