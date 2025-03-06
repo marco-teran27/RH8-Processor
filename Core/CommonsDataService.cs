@@ -24,7 +24,9 @@ namespace Core
                 Reprocess.Instance.SetReprocess(config);
                 ScriptPath.Instance.SetScriptPath(config);
                 TimeOutMin.Instance.SetMinutes(config);
-                ProjectName.Instance.SetName(config); // Already added, kept for consistency
+                ProjectName.Instance.SetName(config);
+                RhinoFileSettings.Instance.SetSettings(config); // Added
+                PidSettings.Instance.SetSettings(config);       // Added
             }
         }
 

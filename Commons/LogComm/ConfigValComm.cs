@@ -18,10 +18,6 @@ namespace Commons.LogComm
 
         public void LogValidationResults(IConfigValResults results)
         {
-            var config = (IConfigDataResults)results.GetType()
-                .GetField("_config", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
-                ?.GetValue(results);
-
             foreach (var (name, isValid, messages) in results.Results)
             {
                 string validatorName = name switch
@@ -57,18 +53,18 @@ namespace Commons.LogComm
                         "FileDir" => messages.FirstOrDefault() ?? "ERROR not found",
                         "OutputDir" => messages.FirstOrDefault() ?? "ERROR not found",
                         "ScriptDir" => messages.FirstOrDefault() ?? "ERROR not found",
-                        "ScriptName" => ScriptPath.Instance.FullPath.Split(System.IO.Path.DirectorySeparatorChar).Last().Split('.').First(),
+                        "ScriptName" => ScriptPath.Instance.FullPath.Split(Path.DirectorySeparatorChar).Last().Split('.').First(),
                         "ScriptType" => messages.FirstOrDefault() ?? "ERROR not found",
-                        "RhinoFileMode" => config?.RhinoFileMode ?? "all",
-                        "RhinoFileKeywords" => (config?.RhinoFileMode ?? "all") == "all" ? "Bypassed by ALL" :
-                                               string.Join(", ", config?.RhinoFileKeywords ?? new List<string>()),
-                        "PidMode" => config?.PidMode ?? "list",
-                        "Pids" => (config?.PidMode ?? "list") == "all" ? "Bypassed by ALL" :
+                        "RhinoFileMode" => RhinoFileSettings.Instance.Mode ?? "all",
+                        "RhinoFileKeywords" => (RhinoFileSettings.Instance.Mode ?? "all") == "all" ? "Bypassed by ALL" :
+                                               string.Join(", ", RhinoFileSettings.Instance.Keywords ?? new List<string>()),
+                        "PidMode" => PidSettings.Instance.Mode ?? "list",
+                        "Pids" => (PidSettings.Instance.Mode ?? "list") == "all" ? "Bypassed by ALL" :
                                   ((messages?.Any(m => m.Contains("invalid")) ?? false) ? "Found with invalid formatting" :
                                   ((messages?.Contains("pids: missing") ?? false) ? "ERROR: not found" : "Found with valid formatting")),
                         "ReprocessMode" => Reprocess.Instance.Mode,
                         "ReferenceLog" => Reprocess.Instance.Mode.Equals("ALL", StringComparison.OrdinalIgnoreCase) ? "Bypassed by ALL" : Reprocess.Instance.ReferenceLog,
-                        "TimeoutMinutes" => messages.FirstOrDefault() ?? "ERROR not found", // Updated
+                        "TimeoutMinutes" => messages.FirstOrDefault() ?? "ERROR not found",
                         _ => ""
                     };
                     _rhinoCommOut.ShowMessage(value);
